@@ -1,0 +1,49 @@
+name: Build BBji iOS (unsigned IPA)
+
+# 手动点一下就跑（也可以 push 自动跑）。跑完在页面下方 Artifacts 里下载 ipa。
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 装工具（xcodegen 生成工程、ldid 做假签名）
+        run: brew install xcodegen ldid
+
+      - name: 生成 Xcode 工程
+        run: xcodegen generate
+
+      - name: 编译（不签名）
+        run: |
+          xcodebuild \
+            -project BBji.xcodeproj \
+            -scheme BBji \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: 打成 ipa（假签名，巨魔能装）
+        run: |
+          APP="build/Build/Products/Release-iphoneos/BBji.app"
+          # 巨魔装未签名包会报签名无效 —— 用 ldid 做个假签名（TrollStore 认这个）
+          ldid -S "$APP/BBji"
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qry BBji-iOS-0.0.1.ipa Payload
+          unzip -l BBji-iOS-0.0.1.ipa | head -20
+          shasum -a 256 BBji-iOS-0.0.1.ipa
+
+      - name: 上传 ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: BBji-iOS-0.0.1-ipa
+          path: BBji-iOS-0.0.1.ipa
+          retention-days: 30

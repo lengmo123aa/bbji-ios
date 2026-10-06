@@ -1,0 +1,45 @@
+# XcodeGen 工程描述 —— 由它生成 BBji.xcodeproj（CI 里自动跑，不用提交 xcodeproj）
+# 为什么要这样：我们没有 Mac，本地没法建 Xcode 工程；用 YAML 描述，CI 上的 Xcode 自己生成。
+name: BBji
+options:
+  bundleIdPrefix: cn.xkmd
+  deploymentTarget:
+    iOS: "15.0"          # 你的机器是 iOS 16，定 15 兼容更广
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+    ENABLE_BITCODE: NO
+    DEVELOPMENT_TEAM: ""          # 不签名：CI 里用 CODE_SIGNING_ALLOWED=NO
+targets:
+  BBji:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+        excludes:
+          - "Info.plist"
+    info:
+      path: Resources/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cn.xkmd.bbji.ios
+        PRODUCT_NAME: BBji
+        INFOPLIST_FILE: Resources/Info.plist
+        TARGETED_DEVICE_FAMILY: "1"        # 只做 iPhone
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: NO
+# 明确写一个 scheme（CI 里 xcodebuild -scheme BBji 要用）
+schemes:
+  BBji:
+    build:
+      targets:
+        BBji: all
+    run:
+      config: Release
+    archive:
+      config: Release

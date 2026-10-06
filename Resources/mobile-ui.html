@@ -1,0 +1,1592 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>BB鸡 · 手机端全部页面（含点击后的下一页与效果）</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --blue:#0A84FF;--blue-d:#0A6FD8;
+    --ink:#0B0D12;--ink2:#2C323C;
+    --sec:#8A93A0;--ter:#AAB2BD;
+    --sep:rgba(60,60,67,.085);
+    --page:#F4F6FA;--card:#FFFFFF;--search:#EBEEF4;
+    --red:#FF3B30;--orange:#FF9500;--green:#34C759;--purple:#7B5CF0;--pink:#F2557D;--teal:#1E9EE0;
+  }
+  body{
+    background:linear-gradient(168deg,#EDF1F8 0%,#F4F6FA 55%,#FAF7F4 100%);
+    padding:40px 26px;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+  .board{display:grid;grid-template-columns:repeat(4,282px);gap:34px 28px;justify-content:center}
+
+  /* ================= 外壳 ================= */
+  .ph{width:282px;height:596px;border-radius:44px;background:#0B0E13;padding:6px;position:relative;
+    box-shadow:0 16px 36px rgba(84,112,158,.15)}
+  .ph::after{content:"";position:absolute;inset:3px;border-radius:41px;
+    border:1px solid rgba(255,255,255,.085);pointer-events:none}
+  .scr{position:relative;width:270px;height:584px;border-radius:38px;overflow:hidden;
+    display:flex;flex-direction:column;background:var(--page)}
+  .island{position:absolute;left:50%;top:7px;transform:translateX(-50%);width:66px;height:17px;
+    border-radius:9px;background:#0B0E13;z-index:40}
+  .home{position:absolute;left:50%;bottom:7px;transform:translateX(-50%);width:100px;height:4px;
+    border-radius:2px;background:rgba(11,13,18,.20);z-index:40}
+
+  /* ================= 状态栏 ================= */
+  .st{height:32px;flex:none;align-self:stretch;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 17px 4px;font-size:10.5px;font-weight:600;color:var(--ink);letter-spacing:.15px}
+  .st .r{display:flex;align-items:center;gap:3.5px}
+
+  /* ================= 图标 ================= */
+  .ico{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;
+    stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .ico.s{width:13px;height:13px;stroke-width:1.7}
+  .ico.l{width:19px;height:19px}
+  .ico.xl{width:22px;height:22px}
+
+  /* ================= 导航 ================= */
+  .ltitle{padding:2px 18px 12px;display:flex;align-items:flex-end}
+  .ltitle h1{font-size:25px;font-weight:700;color:var(--ink);letter-spacing:-.8px;line-height:1}
+  .ltitle .r{margin-left:auto;color:var(--blue);display:grid;place-items:center;padding-bottom:1px}
+  .navbar{height:42px;flex:none;display:flex;align-items:center;gap:8px;padding:0 14px}
+  .navbar .back{color:var(--blue);display:grid;place-items:center;width:14px;stroke-width:2}
+  .navbar .nt{flex:1;min-width:0}
+  .navbar .nt .n{font-size:14.5px;font-weight:600;color:var(--ink);letter-spacing:-.2px;
+    display:flex;align-items:center;gap:5px}
+  .navbar .nt .s{font-size:10px;color:var(--sec);margin-top:1.5px}
+  .navbar .rs{display:flex;gap:13px;color:var(--blue);align-items:center}
+  .navbar .ctr{flex:1;text-align:center;font-size:15px;font-weight:600;color:var(--ink);letter-spacing:-.2px}
+
+  .av{border-radius:50%;flex:none;object-fit:cover;background:#E7EBF1;display:block}
+  .av.n{width:40px;height:40px}
+  .av.m{width:30px;height:30px}
+  .av.s{width:24px;height:24px}
+  .av.xl{width:84px;height:84px}
+
+  /* ================= 搜索 ================= */
+  .srch{margin:0 14px 10px;height:34px;border-radius:11px;background:var(--search);
+    display:flex;align-items:center;gap:6px;padding:0 10px;font-size:12px;color:#98A1AE}
+  .srch .ico{color:#9AA3B0;stroke-width:1.7}
+
+  /* ================= 分组列表 ================= */
+  .grp{margin:0 14px 12px;background:var(--card);border-radius:13px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(84,112,158,.04)}
+  .grp:last-of-type{margin-bottom:0}
+  .ghead{font-size:11px;color:var(--sec);font-weight:400;padding:14px 20px 6px;letter-spacing:.2px}
+  .row{display:flex;align-items:center;gap:10px;padding:6px 16px;position:relative;
+    font-size:12.5px;color:var(--ink);font-weight:400;min-height:36px}
+  .row.tall{min-height:44px;padding:7px 16px}
+  .row + .row::before{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--sep)}
+  .row.ic + .row.ic::before{left:47px}
+  .row .v{margin-left:auto;font-size:11.5px;color:var(--ter);font-weight:400}
+  .row .ch{color:#C9D0D9;display:grid;place-items:center;margin-left:auto;stroke-width:1.7}
+  .row .v + .ch{margin-left:6px}
+  .row.danger{color:var(--red);justify-content:center}
+  .row .ic{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+  .row .ic .ico{width:12px;height:12px;stroke-width:1.8}
+  .c1{background:var(--purple)}.c2{background:var(--pink)}.c3{background:var(--orange)}
+  .c4{background:var(--blue)}.c5{background:var(--green)}.c6{background:var(--teal)}
+  .c7{background:#9AA6B4}.c8{background:#B4BECB}
+  .sw{width:38px;height:23px;border-radius:11.5px;background:#E6EAF0;position:relative;flex:none;margin-left:auto}
+  .sw i{position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;
+    box-shadow:0 1px 2.5px rgba(60,60,67,.18)}
+  .sw.on{background:var(--green)}.sw.on i{left:17px}
+  .btn{height:42px;border-radius:12px;background:#FFF1F2;color:#FA5A52;font-size:13px;font-weight:500;
+    display:grid;place-items:center;margin:14px 14px 0}
+
+  /* ================= 聊天列表（无卡片） ================= */
+  .plainlist{flex:1;overflow:hidden}
+  .li{display:flex;align-items:center;gap:11px;padding:8px 16px;position:relative;background:transparent}
+  .li + .li::before{content:"";position:absolute;left:0;right:0;top:0;height:.5px;background:var(--sep)}
+  .li.pin{background:rgba(10,132,255,.045)}
+  .li .tx{flex:1;min-width:0}
+  .li .nm{font-size:13.5px;font-weight:600;color:var(--ink);letter-spacing:-.2px;
+    display:flex;align-items:center;gap:6px}
+  .li .pv{font-size:12px;color:var(--sec);margin-top:2.5px;font-weight:400;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .li .rt{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none;padding-left:6px}
+  .li .tm{font-size:11px;color:var(--ter);font-weight:400}
+  .bdg{min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;
+    font-weight:600;display:grid;place-items:center;padding:0 5px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--red)}
+  .chip{font-size:9px;font-weight:600;color:var(--blue);background:rgba(10,132,255,.10);
+    border-radius:4px;padding:1.5px 5px;letter-spacing:.2px;flex:none}
+  .chip.grey{color:#8A93A0;background:rgba(120,130,145,.11)}
+  .chip.fire{color:#F2557D;background:rgba(242,85,125,.11)}
+  .mute{color:#B9C1CB;display:grid;place-items:center}
+  .tick{color:var(--blue);display:grid;place-items:center;opacity:.9}
+  .pinmark{color:var(--blue);opacity:.75}
+
+  /* ================= 底部 Tab ================= */
+  .tab{height:58px;flex:none;display:flex;align-items:flex-start;padding-top:8px;
+    background:rgba(250,251,253,.94);border-top:.5px solid var(--sep)}
+  .tab div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+    font-size:9px;color:#A4ACB8;font-weight:400;letter-spacing:.1px}
+  .tab div.on{color:var(--blue);font-weight:500}
+  .tab .ico{width:19px;height:19px;stroke-width:1.7}
+
+  /* ================= 聊天气泡 ================= */
+  .chat{flex:1;padding:4px 14px 8px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+  .day{text-align:center;font-size:10.5px;color:var(--ter);font-weight:400}
+  .sysmsg{text-align:center;font-size:10.5px;color:var(--ter)}
+  .who{font-size:10.5px;color:var(--sec);margin:0 0 4px 36px}
+  .ln{display:flex;gap:8px;align-items:flex-start}
+  .ln.me{justify-content:flex-end}
+  .b{max-width:186px;padding:9px 12px;border-radius:16px;font-size:12.5px;line-height:1.45;
+    background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(84,112,158,.045);word-break:break-word}
+  .b.m{background:var(--blue);color:#fff;box-shadow:0 1px 2px rgba(10,132,255,.14)}
+  .b.q{position:relative;overflow:hidden}
+  .b .quote{border-left:2px solid rgba(10,132,255,.35);padding-left:8px;margin-bottom:6px;
+    font-size:11px;color:var(--sec);line-height:1.4}
+  .b.m .quote{border-left-color:rgba(255,255,255,.5);color:rgba(255,255,255,.82)}
+  .b.pic,.b.file{padding:0;overflow:hidden}
+  .b.pic img{display:block;width:132px;height:132px;object-fit:cover}
+  .b.file{display:flex;align-items:center;gap:10px;padding:10px 12px;width:172px}
+  .b.file .fi{width:34px;height:34px;border-radius:9px;background:rgba(10,132,255,.10);color:var(--blue);
+    display:grid;place-items:center;flex:none}
+  .b.file .fn{font-size:12px;font-weight:500;color:var(--ink)}
+  .b.file .fs{font-size:10px;color:var(--sec);margin-top:2px}
+  .voice{display:flex;align-items:center;gap:8px;width:150px}
+  .voice .pw{width:26px;height:26px;border-radius:50%;background:rgba(10,132,255,.10);color:var(--blue);
+    display:grid;place-items:center;flex:none}
+  .b.m .voice .pw{background:rgba(255,255,255,.22);color:#fff}
+  .voice .wv{flex:1;display:flex;align-items:center;gap:1.6px;height:16px}
+  .voice .wv i{width:2px;border-radius:1px;background:#C3CEDB;display:block}
+  .b.m .voice .wv i{background:rgba(255,255,255,.62)}
+  .voice .t{font-size:10.5px;color:var(--sec);flex:none}
+  .b.m .voice .t{color:rgba(255,255,255,.85)}
+  .receipt{font-size:9.5px;color:var(--ter);margin-top:4px;text-align:right}
+  .receipt.blue{color:var(--blue);opacity:.75}
+  .burnbar{display:flex;align-items:center;justify-content:center;gap:5px;font-size:10px;
+    color:#F2557D;background:rgba(242,85,125,.075);padding:6px 0;flex:none}
+  .cbar{flex:none;display:flex;align-items:center;gap:9px;padding:9px 14px 20px;
+    background:rgba(252,253,255,.94);border-top:.5px solid var(--sep)}
+  .cbar .pl{color:#9AA3B0;display:grid;place-items:center}
+  .fld{flex:1;height:34px;border-radius:11px;background:#F1F3F7;display:flex;align-items:center;
+    padding:0 12px;font-size:12px;color:#9EA7B3}
+
+  /* ================= 资料页 ================= */
+  .prof{padding:4px 0 14px;text-align:center}
+  .prof .nm{font-size:18px;font-weight:600;color:var(--ink);margin-top:10px;letter-spacing:-.4px}
+  .prof .stt{font-size:11px;color:var(--blue);margin-top:4px;display:flex;align-items:center;
+    justify-content:center;gap:5px}
+  .prof .stt i{width:6px;height:6px;border-radius:50%;background:var(--green);display:block}
+  .acts{display:flex;justify-content:center;gap:10px;margin:12px 0 14px;padding:0 14px}
+  .acts a{flex:1;background:var(--card);border-radius:12px;padding:9px 0;
+    display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;color:var(--ink2);
+    box-shadow:0 1px 2px rgba(84,112,158,.045);text-decoration:none}
+  .acts a .ico{color:var(--blue);width:17px;height:17px}
+
+  /* ================= 新建聊天 ================= */
+  .quick{display:flex;gap:11px;padding:0 14px 6px}
+  .quick a{flex:1;background:var(--card);border-radius:13px;padding:13px 0 11px;text-align:center;
+    text-decoration:none;box-shadow:0 1px 2px rgba(84,112,158,.045)}
+  .quick a .cir{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;
+    background:var(--blue);color:#fff}
+  .quick a .cir.g{background:#F1F3F7;color:#7A8492}
+  .quick a span{font-size:10.5px;color:var(--ink2)}
+
+  /* ================= 群公告 ================= */
+  .notice{margin:0 14px 10px;background:rgba(10,132,255,.07);border-radius:11px;padding:9px 12px;
+    display:flex;align-items:center;gap:8px;font-size:11.5px;color:#2C5C93}
+  .notice .ico{color:var(--blue);flex:none}
+  .notice b{font-weight:600;color:var(--blue)}
+  .notice .more{margin-left:auto;color:#9DB4CE;display:grid;place-items:center}
+
+  /* ================= 媒体 ================= */
+  .seg{display:flex;gap:3px;margin:0 14px 12px;background:var(--search);border-radius:10px;padding:3px}
+  .seg span{flex:1;text-align:center;font-size:12px;color:#8A93A0;padding:6px 0;border-radius:8px}
+  .seg span.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(84,112,158,.10)}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:0 14px}
+  .cell{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#EBEFF4}
+  .cell img{width:100%;height:100%;object-fit:cover;display:block}
+  .cell .sel{position:absolute;right:5px;top:5px;width:15px;height:15px;border-radius:50%;
+    border:1.4px solid rgba(255,255,255,.95);background:rgba(255,255,255,.28);
+    box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  .cell .sel.on{background:var(--blue);border-color:#fff}
+  .cell .sel.on::after{content:"";position:absolute;left:4px;top:1.6px;width:4px;height:8px;
+    border:1.5px solid #fff;border-top:0;border-left:0;transform:rotate(42deg)}
+  .mbar{flex:none;display:flex;align-items:center;gap:10px;padding:12px 14px 22px;
+    border-top:.5px solid var(--sep);background:rgba(252,253,255,.94)}
+  .mbar .pv{font-size:12.5px;color:var(--ink);font-weight:500}
+  .mbar .sub{font-size:10px;color:var(--sec);margin-top:1px}
+  .sendb{margin-left:auto;width:38px;height:38px;border-radius:50%;background:var(--blue);
+    display:grid;place-items:center;color:#fff;box-shadow:0 2px 6px rgba(10,132,255,.20)}
+
+  /* ================= 引导 ================= */
+  .splash{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 26px}
+  .brand{display:flex;align-items:center;gap:10px;margin-top:76px}
+  .brand b{font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-1px}
+  .tag{font-size:13px;color:#71798A;line-height:1.8;text-align:center;margin-top:14px;letter-spacing:.3px}
+  .tag2{font-size:11px;color:#AEB6C1;margin-top:10px;letter-spacing:.4px}
+  .glass{position:relative;width:238px;height:204px;margin:8px 0 0}
+  .glass .o1{position:absolute;left:16px;top:18px;width:190px;height:190px;
+    border-radius:52% 48% 46% 54% / 56% 52% 48% 44%;
+    background:
+      radial-gradient(58% 52% at 32% 24%,rgba(255,255,255,.99),rgba(255,255,255,.20) 42%,rgba(255,255,255,0) 68%),
+      radial-gradient(74% 74% at 68% 74%,rgba(142,180,238,.88),rgba(188,210,246,.52) 54%,rgba(255,255,255,0) 80%),
+      linear-gradient(150deg,rgba(220,233,252,.97),rgba(180,204,242,.84));
+    box-shadow:inset 0 0 32px rgba(255,255,255,.96),inset -14px -16px 32px rgba(132,168,230,.46),
+      0 18px 38px rgba(126,160,214,.19)}
+  .glass .o1::after{content:"";position:absolute;left:20%;top:12%;width:32%;height:22%;
+    border-radius:50%;background:rgba(255,255,255,.88);filter:blur(3px);transform:rotate(-18deg)}
+  .glass .o2{position:absolute;right:2px;top:2px;width:86px;height:86px;border-radius:50%;
+    background:
+      radial-gradient(58% 52% at 34% 26%,rgba(255,255,255,.99),rgba(255,255,255,.16) 46%,rgba(255,255,255,0) 70%),
+      linear-gradient(150deg,rgba(228,238,253,.95),rgba(194,214,247,.80));
+    box-shadow:inset 0 0 18px rgba(255,255,255,.96),inset -8px -9px 18px rgba(146,178,234,.36),
+      0 11px 24px rgba(126,160,214,.15)}
+  .glass .o3{position:absolute;left:-2px;bottom:2px;width:60px;height:60px;border-radius:50%;
+    background:linear-gradient(150deg,rgba(240,245,253,.92),rgba(212,227,248,.68));
+    box-shadow:inset 0 0 15px rgba(255,255,255,.93),0 9px 20px rgba(126,160,214,.13)}
+  .cta{height:50px;border-radius:25px;background:var(--blue);color:#fff;font-size:15px;font-weight:600;
+    display:grid;place-items:center;width:100%;
+    box-shadow:0 3px 10px rgba(10,132,255,.22);letter-spacing:.2px}
+  .link{margin:14px 0 24px;font-size:13px;color:var(--blue);font-weight:400}
+  .dots{display:flex;gap:7px;margin-top:auto;margin-bottom:18px}
+  .dots i{width:6px;height:6px;border-radius:50%;background:#D2DAE5;display:block}
+  .dots i.on{background:var(--blue);width:18px;border-radius:3px}
+
+  /* ================= 质感层 v3：液态玻璃 / 通透（加强版）=================
+     2026-10-06 用户反馈 v2「感觉不出来太大变化」→ 这一版按参考图的"比例"再加一档：
+     ① 背景渐变更明显、光晕更大  ② 卡片更透（看得见背景）  ③ 头像/行高按参考图放大比例
+     结构、屏数、文案、Tab 数量仍然一个没动。 */
+  :root{
+    --blue:#4A8BF6;--blue-d:#3D7BE8;
+    --sec:#93A0B0;--ter:#BEC6D2;
+    --sep:rgba(60,60,67,.045);
+    --card:rgba(255,255,255,.50);--search:rgba(255,255,255,.58);
+  }
+  body{background:linear-gradient(168deg,#E3ECFB 0%,#F1F6FD 42%,#F7F1FB 100%)}
+  .ph{box-shadow:0 34px 80px rgba(84,112,158,.24)}
+  /* ① 页面级背景：淡蓝紫渐变 + 两个柔光球（"有空气"的关键） */
+  .scr{background:linear-gradient(168deg,#E9F1FD 0%,#F5F9FE 44%,#F2EFFC 100%)}
+  .scr::before,.scr::after{content:"";position:absolute;border-radius:50%;z-index:0;pointer-events:none}
+  .scr::before{width:290px;height:290px;left:-90px;top:-110px;filter:blur(10px);
+    background:radial-gradient(circle at 38% 36%,rgba(126,176,255,.62),rgba(126,176,255,0) 62%)}
+  .scr::after{width:265px;height:265px;right:-96px;top:140px;filter:blur(12px);
+    background:radial-gradient(circle at 60% 40%,rgba(186,166,255,.50),rgba(186,166,255,0) 66%)}
+  .scr > *{position:relative;z-index:1}
+  /* ② 分组卡：更透（看得见背后渐变）+ 大圆角 + 一道"玻璃边"高光 */
+  .grp{background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-radius:24px;box-shadow:0 10px 26px rgba(16,32,64,.05)}
+  /* 卡片里不要一条条的分割线（用户 2026-10-06：菜单之间不该有那些间隔） */
+  .row + .row::before,.li + .li::before{display:none}
+  /* 资料页头像居中（原来是 display:block 靠左，一直都偏 —— 用户指出来了） */
+  .prof .av{margin:0 auto}
+  /* 在线状态直接标在头像上（右下角绿点），头像下面那行"在线"不要了 */
+  .prof .pav{position:relative;width:84px;height:84px;margin:0 auto}
+  .prof .pav .av{margin:0}
+  .prof .pav .ondot{position:absolute;right:2px;bottom:2px;width:16px;height:16px;border-radius:50%;
+    background:linear-gradient(180deg,#5FD97E,#34C759);box-shadow:0 0 0 2.5px rgba(255,255,255,.92)}
+  /* 资料页再收一点高度：去掉了分割线之后下面那块还是差 ~18px 才能放下 3 行开关，
+     把上下留白压一压（内容一行没少） */
+  .prof{padding:2px 0 8px}
+  .acts{margin:8px 0 10px}
+  .acts a{padding:7px 0}
+  /* ③ 更淡的线与辅助字
+     ⚠️ 「设置页有 10 行 + 资料页 6 行」，行高一动就会把最后几行挤出屏幕（v2 第一版踩过、v3 也踩了一次）——
+     所以行高 / padding 保持原样，房间感靠"头像变大 + 背景更透 + 卡片更玻璃 + Tab 更高"来给。 */
+  .row{padding:6px 16px}
+  .row.tall{padding:7px 16px}
+  .row + .row::before{background:rgba(60,60,67,.045)}
+  .row .v{color:#BEC6D2}
+  .row .ch{color:#CFD7E0}
+  .ghead{color:#93A0B0}
+  /* ④ 图标圆底 → 柔和渐变（尺寸还是 22px，只把圆形改成圆角方块）；开关 → 渐变（尺寸不变） */
+  .row .ic{border-radius:7px;box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+  .c1{background:linear-gradient(160deg,#C6A9FF,#8E6BF0)}
+  .c2{background:linear-gradient(160deg,#FFA9C4,#F2557D)}
+  .c3{background:linear-gradient(160deg,#FFC182,#F0913F)}
+  .c4{background:linear-gradient(160deg,#7FB6FF,#4A8BF6)}
+  .c5{background:linear-gradient(160deg,#8FE3B0,#38B26A)}
+  .c6{background:linear-gradient(160deg,#8FDDE8,#2E9FB2)}
+  .c7,.c8{background:linear-gradient(160deg,#C3CBD8,#8A94A2)}
+  .sw{background:#DCE1E9}
+  .sw.on{background:linear-gradient(180deg,#7DB3FF,#4A8BF6)}
+  /* ⑤ 搜索 / 输入条 / 底栏 / Tab → 玻璃条 */
+  .srch{background:var(--search);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-radius:15px;box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 2px 8px rgba(16,32,64,.04)}
+  .cbar,.mbar{background:rgba(255,255,255,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-top:.5px solid rgba(60,60,67,.06)}
+  .fld{background:rgba(255,255,255,.78);backdrop-filter:blur(10px);border-radius:13px}
+  .tab{background:rgba(255,255,255,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border-top:.5px solid rgba(60,60,67,.05);height:62px}
+  .tab div{letter-spacing:.1px}
+  /* ⑥ 大标题更粗、主按钮/发送键换成浅蓝渐变胶囊 + 内高光 */
+  .ltitle h1{letter-spacing:-.9px}
+  .cta,.btn,.sendb{background:linear-gradient(180deg,#79B0FF,#4A8BF6);
+    box-shadow:0 12px 26px rgba(74,139,246,.32),inset 0 1px 0 rgba(255,255,255,.45)}
+  .btn{color:#fff;font-weight:600;border-radius:20px}
+  .sendb{box-shadow:0 8px 18px rgba(74,139,246,.30),inset 0 1px 0 rgba(255,255,255,.42)}
+  .quick a .cir{background:linear-gradient(160deg,#7FB6FF,#4A8BF6);
+    box-shadow:0 8px 18px rgba(74,139,246,.28),inset 0 1px 0 rgba(255,255,255,.40)}
+  /* 聊天气泡：玻璃 + 渐变 */
+  .b{background:rgba(255,255,255,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-radius:18px;box-shadow:0 2px 8px rgba(16,32,64,.06)}
+  .b.m{background:linear-gradient(180deg,#71ABFF,#4A8BF6);
+    box-shadow:0 6px 16px rgba(74,139,246,.30),inset 0 1px 0 rgba(255,255,255,.35)}
+  .b.pic img{border-radius:18px}
+  .voice .pw{background:rgba(74,139,246,.12);color:#4A8BF6}
+  /* 资料页四个操作块 / 新建聊天三块 / 群公告 / 分段控件 / 媒体格 */
+  .acts a,.quick a{background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-radius:18px;box-shadow:0 6px 20px rgba(16,32,64,.06)}
+  .acts a .ico{color:#4A8BF6}
+  .notice{background:rgba(106,168,255,.16);border-radius:14px;color:#1E4E8C}
+  .notice b,.notice .ico{color:#3D7BE8}
+  .seg{background:rgba(255,255,255,.72);backdrop-filter:blur(10px);border-radius:13px}
+  .seg span.on{background:linear-gradient(180deg,#79B0FF,#4A8BF6);color:#fff;
+    box-shadow:0 4px 12px rgba(74,139,246,.28)}
+  .cell{border-radius:14px}
+  /* 头像放大一档（按参考图比例）/ 聊天列表更松 / 角标 */
+  .av{box-shadow:0 0 0 .5px rgba(15,23,41,.10) inset}
+  .av.n{width:46px;height:46px}
+  .li{padding:4px 16px}   /* 头像放大到 46 之后，行距收到 4px，否则"新建聊天"那页最后一行会被切掉 */
+  .quick a{padding:11px 0 9px}
+  .li + .li::before{background:rgba(60,60,67,.045)}
+  .li.pin{background:rgba(106,168,255,.10)}
+  .li .nm{font-size:14px;letter-spacing:-.25px}
+  .li .pv{font-size:12.5px}
+  .chip{background:rgba(74,139,246,.12);color:#4A8BF6;border-radius:6px}
+  .bdg{background:linear-gradient(180deg,#FF6B5B,#F0463A);box-shadow:0 1px 3px rgba(240,70,58,.35)}
+  .burnbar{background:rgba(242,85,125,.09)}
+  .day,.sysmsg,.receipt{color:#B7BFCA}
+  .prof .nm{font-weight:700;letter-spacing:-.5px}
+</style>
+<style>
+  /* ================= v4 补充：全部页面 + 说明条 + 新组件 =================
+     沿用 v3 的 iOS 玻璃基调，只加"还没画过的页面"要用到的东西。 */
+  .board{grid-template-columns:repeat(4,290px);gap:30px 26px}
+  /* 每台机器上面一个编号标题、下面一句"点了哪去哪" */
+  .cellw{width:282px;display:flex;flex-direction:column}
+  .tl{font-size:12px;font-weight:600;color:#1B2432;margin:0 2px 7px;display:flex;gap:6px;align-items:baseline}
+  .tl b{display:inline-grid;place-items:center;min-width:20px;height:18px;border-radius:6px;
+    background:linear-gradient(180deg,#79B0FF,#4A8BF6);color:#fff;font-size:10.5px;padding:0 5px;font-weight:700}
+  .tl span{font-size:11px;font-weight:400;color:#8A93A0}
+  .nt{margin:7px 2px 0;font-size:11px;line-height:1.65;color:#7E8796}
+  .nt b{color:#4A8BF6;font-weight:600}
+  .nt i{font-style:normal;color:#B4BECB}
+  /* 分组大标题（横跨整行） */
+  .sec{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;margin:8px 0 -6px;padding:0 2px}
+  .sec h2{font-size:17px;font-weight:700;color:#111826;letter-spacing:-.4px}
+  .sec p{font-size:12px;color:#8A93A0}
+  /* 底部动作面板 / 半屏菜单 */
+  .sheet{flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:0 10px 10px}
+  .sheet .grp{margin:0 0 8px}
+  .sheet .cancel{background:rgba(255,255,255,.92);border-radius:16px;text-align:center;padding:13px 0;
+    font-size:13.5px;color:#4A8BF6;font-weight:500;box-shadow:0 2px 8px rgba(16,32,64,.06)}
+  .sheet .hh{text-align:center;font-size:11px;color:#8A93A0;padding:4px 0 8px}
+  .row.ctr{justify-content:center;font-size:13px}
+  /* 全屏遮罩（弹层底下压暗） */
+  .veil{position:absolute;inset:0;background:rgba(12,18,30,.34);backdrop-filter:blur(1.5px);z-index:20}
+  /* 复选框 */
+  .ck{width:21px;height:21px;border-radius:50%;border:1.5px solid #D5DCE6;flex:none;margin-left:auto;display:grid;place-items:center}
+  .ck.on{background:linear-gradient(180deg,#79B0FF,#4A8BF6);border-color:transparent}
+  .ck.on::after{content:"";width:4.5px;height:9px;border:1.8px solid #fff;border-top:0;border-left:0;transform:rotate(42deg) translate(-1px,-1px)}
+  /* 通话页 */
+  .call{flex:1;display:flex;flex-direction:column;align-items:center;color:#fff;padding:6px 20px 0;
+    background:linear-gradient(170deg,#3F4A63 0%,#2A3247 46%,#1B2130 100%)}
+  .call .nm{font-size:17px;font-weight:600;margin-top:14px;letter-spacing:-.3px}
+  .call .stt{font-size:11.5px;color:rgba(255,255,255,.62);margin-top:5px}
+  .call .bigav{width:104px;height:104px;border-radius:50%;margin-top:26px;object-fit:cover;display:block;
+    box-shadow:0 0 0 6px rgba(255,255,255,.10)}
+  .call .ctrls{margin-top:auto;margin-bottom:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px 10px;width:100%}
+  .call .cb{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10px;color:rgba(255,255,255,.72)}
+  .call .cb i{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;
+    color:#fff;font-style:normal}
+  .call .cb.hang i{background:#FF3B30}
+  .call .cb.ans i{background:#34C759}
+  .call .rv{position:absolute;inset:0;background:#0B1220;z-index:0}
+  .call .lv{position:absolute;right:12px;top:56px;width:74px;height:104px;border-radius:12px;object-fit:cover;
+    border:1.5px solid rgba(255,255,255,.22);z-index:2}
+  /* 群通话网格 */
+  .gg{position:absolute;inset:44px 10px 130px;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:6px;z-index:1}
+  .gg .t{border-radius:14px;overflow:hidden;position:relative;background:#2A3247}
+  .gg .t img{width:100%;height:100%;object-fit:cover;display:block;opacity:.92}
+  .gg .t span{position:absolute;left:7px;bottom:6px;font-size:9.5px;color:#fff;background:rgba(0,0,0,.32);
+    border-radius:6px;padding:1px 6px}
+  /* 数字键盘（锁屏） */
+  .kp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 10px}
+  .kp .big{font-size:19px;font-weight:600;color:#fff;margin-bottom:8px}
+  .kp .sub{font-size:11.5px;color:rgba(255,255,255,.62);margin-bottom:16px}
+  .dots6{display:flex;gap:12px;margin-bottom:auto}
+  .dots6 i{width:11px;height:11px;border-radius:50%;border:1.4px solid rgba(255,255,255,.72);display:block}
+  .dots6 i.on{background:#fff;border-color:#fff}
+  .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 22px;margin-bottom:6px}
+  .keys .k{width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;font-weight:400;line-height:1}
+  .keys .k small{font-size:7.5px;letter-spacing:1.2px;margin-top:2px;color:rgba(255,255,255,.6)}
+  .keys .k.gh{background:transparent}
+  .lockbg{flex:1;display:flex;flex-direction:column;align-items:center;background:linear-gradient(170deg,#5A6B8C 0%,#33405C 50%,#1E2634 100%);position:relative}
+  .lockbg .topm{color:#fff;font-size:11.5px;color:rgba(255,255,255,.7);margin-top:14px}
+  .lockbg .bigav{width:76px;height:76px;border-radius:50%;margin-top:36px;object-fit:cover;display:block;
+    box-shadow:0 0 0 4px rgba(255,255,255,.12)}
+  /* 计算器伪装锁 */
+  .calc{flex:1;background:#111417;display:flex;flex-direction:column;padding:0 12px 12px;color:#fff}
+  .calc .out{flex:none;text-align:right;font-size:44px;font-weight:300;padding:34px 6px 18px;letter-spacing:-1px}
+  .calc .kpd{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:9px;align-content:end;padding-bottom:4px}
+  .calc .k{border-radius:50%;background:#2C2C2E;display:grid;place-items:center;font-size:20px;color:#fff;aspect-ratio:1}
+  .calc .k.f{background:#F1F1F1;color:#111}
+  .calc .k.o{background:#FF9F0A}
+  .calc .k.zero{grid-column:span 2;border-radius:34px;aspect-ratio:auto}
+  .calc .hint{text-align:center;font-size:10px;color:#6E757E;padding:8px 0 2px}
+  /* 二维码块 */
+  .qrbox{width:168px;height:168px;margin:6px auto 0;border-radius:12px;background:#fff;padding:10px;
+    box-shadow:0 6px 18px rgba(16,32,64,.08);display:grid;place-items:center}
+  .qrbox .fake{width:100%;height:100%;border-radius:6px;
+    background:
+      linear-gradient(90deg,#0B0D12 12px,transparent 12px) 0 0/24px 24px,
+      linear-gradient(#0B0D12 12px,transparent 12px) 0 0/24px 24px,
+      linear-gradient(90deg,#0B0D12 12px,transparent 12px) 12px 12px/24px 24px,
+      linear-gradient(#0B0D12 12px,transparent 12px) 12px 12px/24px 24px,#fff;
+    opacity:.86}
+  /* 成员网格 */
+  .mem{display:grid;grid-template-columns:repeat(5,1fr);gap:10px 6px;padding:12px 14px 4px}
+  .mem .m{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:9.5px;color:#8A93A0}
+  .mem .m .av{width:44px;height:44px}
+  .mem .m.add .av{background:rgba(255,255,255,.7);border:1px dashed #C9D2DE;display:grid;place-items:center;color:#9AA3B0}
+  /* 小提示条 */
+  .tip{margin:0 14px 10px;font-size:11px;color:#8A93A0;line-height:1.7}
+  .tip b{color:#4A8BF6;font-weight:600}
+  /* 全屏看图 */
+  .viewer{flex:1;background:#0B0D12;display:flex;flex-direction:column;position:relative}
+  .viewer img{width:100%;height:100%;object-fit:contain;display:block}
+  .viewer .bar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;
+    padding:14px 10px 22px;font-size:11px;color:#fff;background:linear-gradient(0deg,rgba(0,0,0,.55),transparent)}
+  .viewer .bar span{display:flex;flex-direction:column;align-items:center;gap:6px}
+  /* 录音浮层 */
+  .recwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+  .recwrap .bub{width:150px;height:150px;border-radius:50%;background:rgba(74,139,246,.14);display:grid;place-items:center;color:#4A8BF6}
+  .recwrap .wv{display:flex;align-items:center;gap:2px;height:26px}
+  .recwrap .wv i{width:3px;border-radius:2px;background:#4A8BF6}
+  /* 转发勾人列表用 .row + .ck */
+  /* 大二维码页 */
+  .bigqr{flex:1;display:flex;flex-direction:column;align-items:center;padding-top:10px}
+</style>
+</head>
+<body>
+<div class="board" id="board"></div>
+<script>
+const I = {
+  chat:'<path d="M4.6 7.4A2.9 2.9 0 0 1 7.5 4.5h9a2.9 2.9 0 0 1 2.9 2.9v6a2.9 2.9 0 0 1-2.9 2.9h-5.1L5.8 19.8v-3.5a2.9 2.9 0 0 1-1.2-2.4z"/>',
+  chatf:'<path d="M4.6 7.4A2.9 2.9 0 0 1 7.5 4.5h9a2.9 2.9 0 0 1 2.9 2.9v6a2.9 2.9 0 0 1-2.9 2.9h-5.1L5.8 19.8v-3.5a2.9 2.9 0 0 1-1.2-2.4z" fill="currentColor"/>',
+  people:'<circle cx="9.3" cy="8.8" r="3.6"/><path d="M3.3 19.5a6 6 0 0 1 12 0"/><path d="M16.4 6.1a3.6 3.6 0 0 1 0 6.6"/><path d="M17.9 19.5a5.9 5.9 0 0 0-1.6-4.1"/>',
+  peoplef:'<circle cx="9.3" cy="8.8" r="3.7"/><path d="M3.1 19.6a6.2 6.2 0 0 1 12.4 0z" fill="currentColor"/><circle cx="17.4" cy="9.4" r="2.9" fill="currentColor"/><path d="M15.1 19.6a6.2 6.2 0 0 0-1-3.5 4.6 4.6 0 0 1 6.4 3.5z" fill="currentColor"/>',
+  me:'<circle cx="12" cy="8.4" r="3.9"/><path d="M4.4 20.2a7.6 7.6 0 0 1 15.2 0"/>',
+  mef:'<circle cx="12" cy="8.3" r="4" fill="currentColor"/><path d="M4 20.6a8 8 0 0 1 16 0z" fill="currentColor"/>',
+  phone:'<path d="M6.6 3.8h2.9l1.6 4-2 1.4a12.4 12.4 0 0 0 5.7 5.7l1.4-2 4 1.6v2.9a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 6a2 2 0 0 1 2-2.2z"/>',
+  video:'<rect x="2.8" y="6.4" width="12.6" height="11.2" rx="2.7"/><path d="M15.4 11l5.8-3.4v8.8L15.4 13z"/>',
+  search:'<circle cx="10.9" cy="10.9" r="6.3"/><path d="M19.7 19.7l-4.1-4.1"/>',
+  more:'<circle cx="5.8" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="18.2" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
+  plusc:'<circle cx="12" cy="12" r="9" stroke-width="1.5"/><path d="M12 8.4v7.2M8.4 12h7.2" stroke-width="1.5"/>',
+  plus:'<path d="M12 5.5v13M5.5 12h13"/>',
+  back:'<path d="M14.8 5.4L8.2 12l6.6 6.6"/>',
+  chev:'<path d="M9.6 5.6L16 12l-6.4 6.4"/>',
+  bell:'<path d="M6.4 16.7V11a5.6 5.6 0 0 1 11.2 0v5.7l1.5 2H4.9z"/><path d="M10 20.4a2.2 2.2 0 0 0 4 0"/>',
+  bellslash:'<path d="M6.4 16.7V11a5.6 5.6 0 0 1 11.2 0v5.7l1.5 2H4.9z"/><path d="M10 20.4a2.2 2.2 0 0 0 4 0"/><path d="M4 4l16 16"/>',
+  shield:'<path d="M12 3.5l7 2.6v5.8c0 4-3 6.7-7 8.6-4-1.9-7-4.6-7-8.6V6.1z"/><path d="M9.3 11.8l2 2 3.4-3.6"/>',
+  lock:'<rect x="4.9" y="10.5" width="14.2" height="9.9" rx="3"/><path d="M8.5 10.5V7.9a3.5 3.5 0 0 1 7 0v2.6"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3.4v2.3M12 18.3v2.3M3.4 12h2.3M18.3 12h2.3M5.9 5.9l1.6 1.6M16.5 16.5l1.6 1.6M18.1 5.9l-1.6 1.6M7.5 16.5l-1.6 1.6"/>',
+  moon:'<path d="M20.2 14.4A8.6 8.6 0 1 1 9.6 3.8a7 7 0 0 0 10.6 10.6z"/>',
+  globe:'<circle cx="12" cy="12" r="8.8"/><path d="M3.3 12h17.4M12 3.1c2.4 2.2 3.6 5.3 3.6 8.9s-1.2 6.7-3.6 8.9C9.6 18.7 8.4 15.6 8.4 12S9.6 5.3 12 3.1z"/>',
+  help:'<circle cx="12" cy="12" r="8.8"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1.1.9-1.1 1.6v.4M12 16.5h.01"/>',
+  info:'<circle cx="12" cy="12" r="8.8"/><path d="M12 10.8v5.7M12 7.7h.01"/>',
+  mic:'<rect x="9.2" y="3.1" width="5.6" height="10.8" rx="2.8"/><path d="M5.8 11.4a6.2 6.2 0 0 0 12.4 0M12 17.6v3"/>',
+  smile:'<circle cx="12" cy="12" r="8.8"/><path d="M8.5 14.3a4.6 4.6 0 0 0 7 0"/><circle cx="9.3" cy="9.7" r=".9" fill="currentColor" stroke="none"/><circle cx="14.7" cy="9.7" r=".9" fill="currentColor" stroke="none"/>',
+  play:'<path d="M8.6 6.2l9 5.8-9 5.8z" fill="currentColor" stroke="none"/>',
+  file:'<path d="M13.6 4.5H7A2.5 2.5 0 0 0 4.5 7v10A2.5 2.5 0 0 0 7 19.5h10A2.5 2.5 0 0 0 19.5 17v-6.6"/><path d="M14.6 4.5h4.9v4.9"/><path d="M19.5 4.5l-8 8"/>',
+  fire:'<path d="M12 3.2s5.6 4.4 5.6 9.2a5.6 5.6 0 0 1-11.2 0c0-2 1-3.6 2-4.8.2 1.2.8 2 1.7 2.4-.4-2.6.3-5 1.9-6.8z"/>',
+  pin:'<path d="M12 20.6s5.4-4.6 5.4-8.8a5.4 5.4 0 1 0-10.8 0c0 4.2 5.4 8.8 5.4 8.8z"/><circle cx="12" cy="11.6" r="1.9"/>',
+  check:'<path d="M4.6 12.6l4.9 4.9L19.4 7.6"/>',
+  checkc:'<circle cx="12" cy="12" r="8.6" stroke-width="1.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5" stroke-width="1.7"/>',
+  qr:'<rect x="3.6" y="3.6" width="6.4" height="6.4" rx="1.6"/><rect x="14" y="3.6" width="6.4" height="6.4" rx="1.6"/><rect x="3.6" y="14" width="6.4" height="6.4" rx="1.6"/><path d="M14 14h2.6v2.6H14zM17.8 17.8h2.6v2.6h-2.6z"/>',
+  scan:'<path d="M4 9V6.4A2.4 2.4 0 0 1 6.4 4H9M15 4h2.6A2.4 2.4 0 0 1 20 6.4V9M20 15v2.6A2.4 2.4 0 0 1 17.6 20H15M9 20H6.4A2.4 2.4 0 0 1 4 17.6V15M3.6 12h16.8"/>',
+  addp:'<circle cx="9.8" cy="9" r="3.5"/><path d="M4.4 19.5a5.6 5.6 0 0 1 11 0"/><path d="M18.4 7.2v5.6M15.6 10h5.6"/>',
+  // 新建群聊：两个人（原来跟"添加好友"画得一模一样，用户指出来了）
+  groupadd:'<circle cx="8.8" cy="8.5" r="3.2"/><path d="M3.2 19a5.8 5.8 0 0 1 11.2 0"/><circle cx="16.9" cy="9.7" r="2.4"/><path d="M15 18.9a4.7 4.7 0 0 1 6.4-4.1"/>',
+  text:'<path d="M5 7h14M5 12h9M5 17h11"/>',
+  calendar:'<rect x="3.8" y="5.4" width="16.4" height="14.8" rx="3"/><path d="M3.8 10h16.4M8.4 3.4v4M15.6 3.4v4"/>',
+  video2:'<path d="M3.4 8.4A2.6 2.6 0 0 1 6 5.8h7.4a2.6 2.6 0 0 1 2.6 2.6v7.2a2.6 2.6 0 0 1-2.6 2.6H6a2.6 2.6 0 0 1-2.6-2.6z"/><path d="M16 12l4.6-3v6l-4.6-3z"/>',
+  folder:'<path d="M3.6 7.6A2.4 2.4 0 0 1 6 5.2h3.1l1.8 2.2H18a2.4 2.4 0 0 1 2.4 2.4v6.4A2.4 2.4 0 0 1 18 18.6H6a2.4 2.4 0 0 1-2.4-2.4z"/>',
+  eye:'<path d="M2.6 12S6 6.6 12 6.6 21.4 12 21.4 12 18 17.4 12 17.4 2.6 12 2.6 12z"/><circle cx="12" cy="12" r="2.8"/>'
+};
+const S = (id, cls) => `<svg class="ico ${cls||''}" viewBox="0 0 24 24">${I[id]}</svg>`;
+const status = () => `<div class="st"><span>9:41</span><span class="r">
+  <svg width="15" height="10" viewBox="0 0 18 11" fill="currentColor"><rect x="0" y="7.4" width="3" height="3.6" rx="1"/><rect x="4.8" y="5.4" width="3" height="5.6" rx="1"/><rect x="9.6" y="3" width="3" height="8" rx="1"/><rect x="14.4" y=".6" width="3" height="10.4" rx="1"/></svg>
+  <svg width="14" height="10" viewBox="0 0 17 11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M1.4 3.8a10.4 10.4 0 0 1 14.2 0M4.1 6.5a6.6 6.6 0 0 1 8.8 0M6.9 9.2a2.8 2.8 0 0 1 3.2 0"/></svg>
+  <svg width="20" height="10" viewBox="0 0 26 12" fill="none"><rect x=".6" y=".6" width="22" height="10.8" rx="3.2" stroke="currentColor" opacity=".38"/><rect x="2.4" y="2.4" width="16.4" height="7.2" rx="1.8" fill="currentColor"/><path d="M24.2 4.4v3.2a1.9 1.9 0 0 0 0-3.2z" fill="currentColor" opacity=".38"/></svg>
+</span></div>`;
+const wrap = inner => `<div class="ph"><div class="scr"><div class="island"></div>${inner}<div class="home"></div></div></div>`;
+
+/* BB鸡 官方 logo */
+const logo = (size, r) => `<svg width="${size}" height="${size}" viewBox="0 0 512 512"
+  style="border-radius:${r==null?Math.round(size*0.24):r}px;display:block;flex:none">
+  <defs><linearGradient id="lg${size}" x1="0" y1="0" x2=".85" y2="1">
+    <stop offset="0" stop-color="#5CB0FF"/><stop offset="1" stop-color="#0A63C8"/></linearGradient></defs>
+  <rect width="512" height="512" rx="118" fill="url(#lg${size})"/>
+  <path d="M104 216 a62 62 0 0 0 0 80" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" opacity=".5"/>
+  <path d="M408 216 a62 62 0 0 1 0 80" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" opacity=".5"/>
+  <circle cx="256" cy="124" r="19" fill="#fff"/>
+  <path d="M164 300 V262 a92 92 0 0 1 184 0 V300 Z" fill="#fff"/>
+  <rect x="136" y="294" width="240" height="36" rx="18" fill="#fff"/>
+  <circle cx="256" cy="356" r="26" fill="#FFC24D"/></svg>`;
+
+/* BB鸡 内置头像 a01–a29 */
+const A = {
+  xiang:'assets/av01.jpg', wang:'assets/av05.jpg', alex:'assets/av06.jpg',
+  xing:'assets/av10.jpg', grpAll:'assets/av13.jpg', zhao:'assets/av14.jpg',
+  prod:'assets/av15.jpg', test:'assets/av16.jpg', yufang:'assets/av17.jpg',
+  design:'assets/av18.jpg', liming:'assets/av19.jpg', zhang:'assets/av20.jpg',
+  ph1:'assets/ph_chat.jpg', ph2:'assets/ph_grp.jpg'
+};
+const G = ['assets/ph_g1.jpg','assets/ph_g2.jpg','assets/ph_g3.jpg','assets/ph_g4.jpg','assets/ph_g5.jpg',
+  'assets/ph_g6.jpg','assets/ph_g7.jpg','assets/ph_g8.jpg','assets/ph_g9.jpg',
+  'assets/ph_g10.jpg','assets/ph_g11.jpg','assets/ph_g12.jpg'];
+const im = (src,cls) => `<img class="av ${cls||'n'}" src="${src}" alt="">`;
+const wave = n => Array.from({length:n},(_,i)=>`<i style="height:${[6,11,15,8,13,17,9,14,7,16,12,8][i%12]}px"></i>`).join('');
+
+const tabs = on => `<div class="tab">
+  <div class="${on===0?'on':''}">${S(on===0?'chatf':'chat')}消息</div>
+  <div class="${on===1?'on':''}">${S(on===1?'peoplef':'people')}通讯录</div>
+  <div class="${on===2?'on':''}">${S(on===2?'mef':'me')}我</div></div>`;
+
+/* ============ ① 引导页 ============ */
+const splash = () => wrap(`
+  ${status()}
+  <div class="splash">
+    <div class="brand">${logo(38)}<b>BB鸡</b></div>
+    <div class="tag">随时随地<br>与重要的人聊天</div>
+    <div class="tag2">更简洁 · 更流畅 · 更懂你</div>
+    <div class="glass"><span class="o1"></span><span class="o2"></span><span class="o3"></span></div>
+    <div class="dots"><i class="on"></i><i></i><i></i></div>
+    <div class="cta">开始使用</div>
+    <div class="link">已有账号，去登录</div>
+  </div>`);
+
+/* ============ ② 消息 ============ */
+const rows = [
+  {n:'象象', on:1, pin:1, p:'好的，收到！😊', t:'09:41', b:3, a:A.xiang},
+  {n:'测试群', p:'老王：今晚一起吃饭吧～', t:'09:32', b:12, a:A.test},
+  {n:'星皓', mute:1, p:'这个方案不错，赞！', t:'09:28', d:1, a:A.xing},
+  {n:'Alex', p:'[草稿] Sounds great!', t:'09:15', tick:1, a:A.alex},
+  {n:'产品讨论', fire:1, p:'我：已上传最新版本', t:'09:02', b:5, a:A.prod},
+  {n:'设计小组', p:'李明：这版配色我调好了，你看下', t:'昨天', b:2, a:A.design}
+];
+const messages = () => wrap(`
+  ${status()}
+  <div class="ltitle"><h1>消息</h1><span class="r">${S('plusc','xl')}</span></div>
+  <div class="srch">${S('search','s')}搜索聊天、联系人、消息</div>
+  <div class="plainlist">
+    ${rows.map(r=>`<div class="li ${r.pin?'pin':''}">
+      ${im(r.a,'n')}
+      <div class="tx">
+        <div class="nm">${r.n}${r.on?'<span class="chip">在线</span>':''}${r.fire?'<span class="chip fire">阅后即焚</span>':''}</div>
+        <div class="pv">${r.p}</div>
+      </div>
+      <div class="rt">
+        <span class="tm">${r.t}</span>
+        ${r.b?`<span class="bdg">${r.b}</span>`:''}
+        ${r.mute?`<span class="mute">${S('bellslash','s')}</span>`:''}
+        ${r.tick?`<span class="tick">${S('checkc','s')}</span>`:''}
+        ${r.d?`<span class="dot"></span>`:''}
+      </div>
+    </div>`).join('')}
+  </div>
+  ${tabs(0)}`);
+
+/* ============ ③ 单聊 ============ */
+const chat = () => wrap(`
+  ${status()}
+  <div class="navbar">
+    <span class="back">${S('back')}</span>${im(A.xiang,'m')}
+    <div class="nt"><div class="n">象象</div><div class="s">在线</div></div>
+    <div class="rs">${S('phone')}${S('video')}${S('more')}</div>
+  </div>
+  <div class="chat">
+    <div class="day">今天 09:36</div>
+    <div class="ln">${im(A.xiang,'s')}<div class="b">今天天气真好呀 🌞</div></div>
+    <div class="ln me"><div><div class="b m">是啊！<br>周末一起去逛街吧？😊</div>
+      <div class="receipt blue">已读</div></div></div>
+    <div class="ln">${im(A.xiang,'s')}<div class="b pic"><img src="${A.ph1}" alt=""></div></div>
+    <div class="ln">${im(A.xiang,'s')}<div class="b">
+      <div class="quote">我说：周末一起去逛街吧？</div>那边新开了一家店，我拍了照片</div></div>
+    <div class="ln me"><div class="b m">
+      <div class="voice"><span class="pw">${S('play','s')}</span><span class="wv">${wave(20)}</span><span class="t">0:08</span></div>
+    </div></div>
+  </div>
+  <div class="cbar">
+    <span class="pl">${S('mic','l')}</span>
+    <div class="fld">输入消息</div>
+    <span class="pl">${S('smile','l')}</span>
+    <span class="pl">${S('plusc','l')}</span>
+  </div>`);
+
+/* ============ ④ 个人资料 ============ */
+const profile = () => wrap(`
+  ${status()}
+  <div class="navbar"><span class="back">${S('back')}</span><div class="nt"></div>
+    <div class="rs">${S('more')}</div></div>
+  <div class="prof">
+    <div class="pav">${im(A.xiang,'xl')}<i class="ondot"></i></div>
+    <div class="nm">象象</div>
+  </div>
+  <div class="acts">
+    <a href="#">${S('phone','l')}语音通话</a>
+    <a href="#">${S('video','l')}视频通话</a>
+    <a href="#">${S('search','l')}搜索</a>
+    <a href="#">${S('more','l')}更多</a>
+  </div>
+  <div class="grp">
+    <div class="row">备注<span class="v">象象</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row">共同群聊
+      <span class="v" style="color:var(--blue);font-weight:500">3 个 · 要不建一个？</span>
+      <span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row">免打扰<span class="sw"><i></i></span></div>
+    <div class="row">消息通知<span class="sw on"><i></i></span></div>
+    <div class="row">阅后即焚<span class="sw on"><i></i></span></div>
+  </div>
+  <div class="grp">
+    <div class="row">清空聊天记录<span class="ch">${S('chev','s')}</span></div>
+    <div class="row danger">删除联系人</div>
+  </div>`);
+
+/* ============ ⑤ 新建聊天 ============ */
+const recent = [
+  {n:'Alex', s:'iOS 开发', a:A.alex},
+  {n:'设计小组', s:'8 人', a:A.design},
+  {n:'产品经理', s:'产品 · 设计', a:A.prod},
+  {n:'李明', s:'上次在线 1 小时前', a:A.liming},
+  {n:'玉芳', s:'上次在线 2 小时前', a:A.yufang},
+  {n:'张伟', s:'上次在线 昨天', a:A.zhang}
+];
+const newChat = () => wrap(`
+  ${status()}
+  <div class="navbar"><span class="back">${S('back')}</span><div class="ctr">新建聊天</div>
+    <span style="width:14px"></span></div>
+  <div class="srch">${S('search','s')}搜索联系人</div>
+  <div class="quick">
+    <a href="#"><span class="cir">${S('groupadd','l')}</span><span>新建群聊</span></a>
+    <a href="#"><span class="cir g">${S('addp','l')}</span><span>添加好友</span></a>
+    <a href="#"><span class="cir g">${S('scan','l')}</span><span>扫一扫</span></a>
+  </div>
+  <div class="ghead">最近联系人</div>
+  <div class="grp" style="margin-top:0">
+    ${recent.map(r=>`<div class="row ic tall">${im(r.a,'m')}
+      <span><span style="font-size:13px;font-weight:500;color:var(--ink)">${r.n}</span><br>
+      <span style="font-size:10.5px;color:var(--sec)">${r.s}</span></span>
+      <span class="ch">${S('chev','s')}</span></div>`).join('')}
+  </div>`);
+
+/* ============ ⑥ 群聊 ============ */
+const groupChat = () => wrap(`
+  ${status()}
+  <div class="navbar">
+    <span class="back">${S('back')}</span>${im(A.test,'m')}
+    <div class="nt"><div class="n">测试群</div><div class="s">5 人在线 · 8 人</div></div>
+    <div class="rs">${S('phone')}${S('more')}</div>
+  </div>
+  <div class="notice">${S('bell','s')}<span><b>群公告</b> 周五团建，记得回复报名</span>
+    <span class="more">${S('chev','s')}</span></div>
+  <div class="chat">
+    <div class="who">老王</div>
+    <div class="ln">${im(A.wang,'s')}<div class="b">今晚一起吃饭吧～</div></div>
+    <div class="who">象象</div>
+    <div class="ln">${im(A.xiang,'s')}<div class="b">好呀！我做了你们爱吃的 😋</div></div>
+    <div class="who">星皓</div>
+    <div class="ln">${im(A.xing,'s')}<div class="b pic"><img src="${A.ph2}" alt=""></div></div>
+    <div class="ln me"><div><div class="b m">期待！🎉</div>
+      <div class="receipt blue">已读 4</div></div></div>
+  </div>
+  <div class="cbar">
+    <span class="pl">${S('mic','l')}</span>
+    <div class="fld">输入消息</div>
+    <span class="pl">${S('smile','l')}</span>
+    <span class="pl">${S('plusc','l')}</span>
+  </div>`);
+
+/* ============ ⑦ 媒体 ============ */
+const media = () => wrap(`
+  ${status()}
+  <div class="navbar"><span class="back">${S('back')}</span><div class="ctr">媒体</div>
+    <span class="ctr" style="color:var(--blue);font-size:13px;font-weight:400;flex:none">选择</span></div>
+  <div class="seg"><span class="on">图片</span><span>视频</span><span>文件</span></div>
+  <div class="grid3">
+    ${G.map((g,i)=>`<div class="cell"><img src="${g}" alt=""><span class="sel ${i<3?'on':''}"></span></div>`).join('')}
+  </div>
+  <div class="mbar">
+    <span><span class="pv">预览(3)</span><br><span class="sub">共 128 张 · 42.6 MB</span></span>
+    <span class="sendb">${S('check','l')}</span>
+  </div>`);
+
+/* ============ ⑧ 设置 ============ */
+const settings = () => wrap(`
+  ${status()}
+  <div class="navbar"><span class="back">${S('back')}</span><div class="ctr">设置</div>
+    <span style="width:14px"></span></div>
+  <div class="grp">
+    <div class="row tall">${im(A.zhao,'m')}
+      <span><span style="font-size:14.5px;font-weight:600;color:var(--ink);letter-spacing:-.2px">赵飞</span><br>
+      <span style="font-size:11px;color:var(--sec)">ID: 12345678</span></span>
+      <span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row ic"><span class="ic c1">${S('shield','s')}</span>账号与安全<span class="ch">${S('chev','s')}</span></div>
+    <div class="row ic"><span class="ic c2">${S('lock','s')}</span>隐私与锁定<span class="v">1 分钟</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row ic"><span class="ic c3">${S('bell','s')}</span>消息通知<span class="v">已开启</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row ic"><span class="ic c4">${S('play','s')}</span>后台保活<span class="sw on"><i></i></span></div>
+    <div class="row ic"><span class="ic c5">${S('text','s')}</span>推送正文样式<span class="v">显示全部</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+<div class="row ic"><span class="ic c6">${S('gear','s')}</span>通用设置<span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row ic"><span class="ic c7">${S('help','s')}</span>帮助与反馈<span class="ch">${S('chev','s')}</span></div>
+    <div class="row ic"><span class="ic c8">${S('info','s')}</span>关于我们<span class="v">v1.0.0</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="btn">退出登录</div>`);
+
+/* ==================================================================
+   v4 补充：把 v3 那 8 屏之外的所有页面补齐（含点按后的下一页/弹层）
+   ================================================================== */
+const cell = (no, name, note, html) =>
+  `<div class="cellw"><div class="tl"><b>${no}</b>${name}</div>${html}<div class="nt">${note}</div></div>`;
+const sec = (t, d) => `<div class="sec"><h2>${t}</h2><p>${d}</p></div>`;
+const bar = (t) => `<div class="navbar"><span class="back">${S('back')}</span><div class="ctr">${t}</div><span style="width:14px"></span></div>`;
+const ck = (on) => `<span class="ck ${on?'on':''}"></span>`;
+
+/* ---------- ① 登录 / 注册 / 找回 ---------- */
+const login = () => wrap(`${status()}
+  <div class="splash" style="padding-top:26px">
+    <div class="brand">${logo(34)}<b>BB鸡</b></div>
+    <div class="tag" style="margin-top:4px;font-size:12.5px">登录后开始聊天</div>
+    <div class="grp" style="width:100%;margin:22px 0 0">
+      <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">邮箱</span><span style="font-size:12.5px">xiang@example.com</span></div>
+      <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">密码</span><span style="font-size:12.5px;letter-spacing:2.5px">••••••••</span>
+        <span class="ch">${S('eye','s')}</span></div>
+    </div>
+    <div class="cta" style="margin-top:16px">登 录</div>
+    <div class="link" style="margin-top:12px">忘记密码？</div>
+    <div class="tag2" style="margin:auto 0 22px">还没有账号？<b style="color:var(--blue);font-weight:500">去注册</b></div>
+  </div>`);
+
+const register = () => wrap(`${status()}
+  <div class="splash" style="padding-top:22px">
+    <div class="brand">${logo(30)}<b style="font-size:22px">注册 BB鸡</b></div>
+    <div class="grp" style="width:100%;margin:20px 0 0">
+      <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">邮箱</span><span style="font-size:12.5px;color:#B4BECB">填邮箱</span></div>
+      <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">验证码</span><span style="font-size:12.5px;color:#B4BECB">6 位数字</span>
+        <b style="margin-left:auto;color:var(--blue);font-size:12px;font-weight:500">获取验证码</b></div>
+      <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">密码</span><span style="font-size:12.5px;color:#B4BECB">至少 8 位</span></div>
+    </div>
+    <div class="tip" style="margin-top:10px">验证码 10 分钟内有效；收不到看下垃圾箱。</div>
+    <div class="cta" style="margin-top:auto;margin-bottom:22px">注册</div>
+  </div>`);
+
+const nickname = () => wrap(`${status()}
+  ${bar('取个名字')}
+  <div class="splash" style="padding-top:6px">
+    <div style="position:relative;margin:6px auto 0">
+      ${im(A.xiang,'xl')}
+      <span style="position:absolute;right:-4px;bottom:-4px;width:28px;height:28px;border-radius:50%;
+        background:linear-gradient(180deg,#79B0FF,#4A8BF6);display:grid;place-items:center;color:#fff;
+        box-shadow:0 4px 10px rgba(74,139,246,.35)">${S('plus','s')}</span>
+    </div>
+    <div class="tag" style="margin-top:12px;font-size:12px">点头像可以换一张</div>
+    <div class="grp" style="width:100%;margin:18px 0 0">
+      <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">昵称</span><span style="font-size:12.5px">象象</span></div>
+    </div>
+    <div class="tip" style="margin-top:10px">以后在「我 → 我的资料」里随时能改。</div>
+    <div class="cta" style="margin-top:auto;margin-bottom:22px">进入 BB鸡</div>
+  </div>`);
+
+const forgot = () => wrap(`${status()}
+  ${bar('找回密码')}
+  <div class="splash" style="padding-top:10px">
+    <div class="grp" style="width:100%;margin-top:8px">
+      <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">邮箱</span><span style="font-size:12.5px">xiang@example.com</span></div>
+      <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">验证码</span><span style="font-size:12.5px;color:#B4BECB">6 位数字</span>
+        <b style="margin-left:auto;color:var(--blue);font-size:12px;font-weight:500">获取验证码</b></div>
+      <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">新密码</span><span style="font-size:12.5px;color:#B4BECB">至少 8 位</span></div>
+    </div>
+    <div class="cta" style="margin-top:18px">重设密码</div>
+  </div>`);
+
+/* ---------- ② 会话列表的两种弹层 ---------- */
+const swipeAct = () => wrap(`${status()}
+  <div class="ltitle"><h1>消息</h1><span class="r">${S('plusc','l')}</span></div>
+  <div class="srch">${S('search','s')}搜索聊天、联系人、消息</div>
+  <div class="plainlist" style="position:relative">
+    <div class="li pin" style="padding-right:150px">
+      ${im(A.grpAll)}
+      <div class="tx"><div class="nm">测试群 <span class="chip grey">5 人</span></div>
+        <div class="pv">老王：今晚一起吃饭吧～</div></div>
+      <div class="rt"><span class="tm">09:32</span><span class="bdg">12</span></div>
+    </div>
+    <div style="position:absolute;right:14px;top:0;height:56px;display:flex;gap:6px;align-items:center">
+      <span style="width:52px;height:44px;border-radius:12px;background:#C3CBD8;color:#fff;font-size:10.5px;display:grid;place-items:center">置顶</span>
+      <span style="width:52px;height:44px;border-radius:12px;background:#F0913F;color:#fff;font-size:10.5px;display:grid;place-items:center">免打扰</span>
+      <span style="width:52px;height:44px;border-radius:12px;background:#FF3B30;color:#fff;font-size:10.5px;display:grid;place-items:center">删除</span>
+    </div>
+    <div class="li">${im(A.xiang)}<div class="tx"><div class="nm">象象</div><div class="pv">好的，收到！</div></div>
+      <div class="rt"><span class="tm">09:41</span><span class="dot"></span></div></div>
+    <div class="li">${im(A.wang)}<div class="tx"><div class="nm">星皓</div><div class="pv">这个方案不错，赞！</div></div>
+      <div class="rt"><span class="tm">09:28</span></div></div>
+  </div>
+  ${tabs(0)}`);
+
+const listMenu = () => wrap(`${status()}
+  <div class="ltitle"><h1>消息</h1><span class="r">${S('plusc','l')}</span></div>
+  <div class="srch">${S('search','s')}搜索聊天、联系人、消息</div>
+  <div class="plainlist" style="position:relative">
+    <div class="veil"></div>
+    <div class="li">${im(A.grpAll)}<div class="tx"><div class="nm">测试群</div><div class="pv">老王：今晚一起吃</div></div></div>
+    <div style="position:relative;z-index:30;margin:2px 14px 10px;background:rgba(255,255,255,.96);
+      border-radius:14px;box-shadow:0 16px 40px rgba(16,32,64,.18);overflow:hidden">
+      <div class="row">标为已读<span class="ch">${S('check','s')}</span></div>
+      <div class="row">置顶聊天<span class="ch">${S('pin','s')}</span></div>
+      <div class="row">消息免打扰<span class="ch">${S('bellslash','s')}</span></div>
+      <div class="row danger" style="color:#FF3B30;justify-content:flex-start">删除聊天<span class="ch" style="color:#FFB4AF">${S('chev','s')}</span></div>
+    </div>
+    <div class="li">${im(A.wang)}<div class="tx"><div class="nm">星皓</div><div class="pv">这个方案不错，赞！</div></div></div>
+  </div>
+  ${tabs(0)}`);
+
+/* ---------- ③ 通讯录 / 新的朋友 / 我 ---------- */
+const contacts = () => wrap(`${status()}
+  <div class="ltitle"><h1>通讯录</h1><span class="r">${S('addp','l')}</span></div>
+  <div class="srch">${S('search','s')}搜索联系人</div>
+  <div class="grp">
+    <div class="row ic"><span class="ic c3">${S('people','s')}</span>新的朋友<span class="v">2 条请求</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row ic"><span class="ic c5">${S('chat','s')}</span>群聊<span class="v">3 个</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="ghead">A · 12 位好友</div>
+  <div class="grp">
+    <div class="row tall">${im(A.alex,'m')}<span style="font-size:12.5px;font-weight:500">Alex</span><span class="v">在线</span></div>
+    <div class="row tall">${im(A.design,'m')}<span style="font-size:12.5px;font-weight:500">设计小组</span></div>
+    <div class="row tall">${im(A.prod,'m')}<span style="font-size:12.5px;font-weight:500">产品经理</span></div>
+    <div class="row tall">${im(A.liming,'m')}<span style="font-size:12.5px;font-weight:500">李明</span><span class="v">上次在线 1 小时前</span></div>
+  </div>
+  ${tabs(1)}`);
+
+const newFriends = () => wrap(`${status()}
+  ${bar('新的朋友')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall">
+      <div style="flex:1"><div style="font-size:12.5px;font-weight:600">小明</div>
+        <div style="font-size:11px;color:#8A93A0;margin-top:3px">「我是产品经理李明介绍的」</div></div>
+      <span style="background:linear-gradient(180deg,#79B0FF,#4A8BF6);color:#fff;font-size:11.5px;font-weight:500;
+        border-radius:9px;padding:6px 12px">同意</span>
+      <span style="color:#8A93A0;font-size:11.5px;margin-left:8px">拒绝</span>
+    </div>
+    <div class="row tall">
+      <div style="flex:1"><div style="font-size:12.5px;font-weight:600">张伟</div>
+        <div style="font-size:11px;color:#8A93A0;margin-top:3px">「按 BB鸡号 10086 加的你」</div></div>
+      <span style="background:linear-gradient(180deg,#79B0FF,#4A8BF6);color:#fff;font-size:11.5px;font-weight:500;
+        border-radius:9px;padding:6px 12px">同意</span>
+      <span style="color:#8A93A0;font-size:11.5px;margin-left:8px">拒绝</span>
+    </div>
+  </div>
+  <div class="ghead">已添加</div>
+  <div class="grp">
+    <div class="row tall">${im(A.yufang,'m')}<span style="font-size:12.5px">玉芳</span><span class="v">已同意</span></div>
+    <div class="row tall">${im(A.zhang,'m')}<span style="font-size:12.5px">赵飞</span><span class="v">已同意</span></div>
+  </div>`);
+
+const me = () => wrap(`${status()}
+  <div class="ltitle"><h1>我</h1></div>
+  <div class="grp">
+    <div class="row tall" style="padding-top:14px;padding-bottom:14px">${im(A.xiang,'xl')}
+      <div><div style="font-size:16px;font-weight:600;letter-spacing:-.3px">象象</div>
+        <div style="font-size:11px;color:#8A93A0;margin-top:4px">BB鸡号 10086</div></div>
+      <span class="ch" style="margin-left:auto">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row ic"><span class="ic c4">${S('me','s')}</span>我的资料<span class="ch">${S('chev','s')}</span></div>
+    <div class="row ic"><span class="ic c3">${S('qr','s')}</span>我的二维码<span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row ic"><span class="ic c1">${S('gear','s')}</span>设置<span class="ch">${S('chev','s')}</span></div>
+  </div>
+  ${tabs(2)}`);
+
+/* ---------- ④ 聊天：扩展面板 / 长按菜单 / 引用 / 看图 / 录音 / 转发 ---------- */
+const plusPanel = () => wrap(`${status()}
+  ${bar('象象')}
+  <div class="chat">
+    <div class="day">今天 09:36</div>
+    <div class="ln"><div><div class="b">今天天气真好呀 😄</div></div></div>
+    <div class="ln me"><div><div class="b m">是啊！<br>周末一起去逛街吧？</div><div class="receipt blue">已读</div></div></div>
+  </div>
+  <div class="grp" style="margin:0 10px 8px;border-radius:18px">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;padding:16px 12px">
+      ${[['图片','c4','eye'],['拍摄','c3','video2'],['文件','c1','folder'],['位置','c5','pin'],
+         ['名片','c6','people'],['语音通话','c2','phone'],['视频通话','c8','video'],['群公告','c7','text']]
+        .map(x=>`<div style="display:flex;flex-direction:column;align-items:center;gap:7px">
+          <span class="ic ${x[1]}" style="width:44px;height:44px;border-radius:14px">${S(x[2],'')}</span>
+          <span style="font-size:10px;color:#7E8796">${x[0]}</span></div>`).join('')}
+    </div>
+  </div>
+  <div class="cbar"><span class="pl">${S('mic','l')}</span><div class="fld">输入消息</div>
+    <span class="pl">${S('smile','l')}</span><span class="pl">${S('plusc','l')}</span></div>`);
+
+const msgMenu = () => wrap(`${status()}
+  ${bar('象象')}
+  <div class="chat" style="position:relative">
+    <div class="veil"></div>
+    <div class="ln"><div><div class="b">晚上一起吃饭？</div></div></div>
+    <div class="ln me"><div><div class="b m" style="box-shadow:0 0 0 2px rgba(74,139,246,.45)">好呀，几点？</div></div></div>
+    <div style="position:relative;z-index:30;margin:6px 0 0 auto;width:172px;background:rgba(255,255,255,.97);
+      border-radius:14px;box-shadow:0 16px 40px rgba(16,32,64,.2);overflow:hidden;font-size:12.5px">
+      <div class="row">引用<span class="ch">${S('text','s')}</span></div>
+      <div class="row">复制<span class="ch">${S('file','s')}</span></div>
+      <div class="row">转发<span class="ch">${S('chev','s')}</span></div>
+      <div class="row">多选<span class="ch">${S('checkc','s')}</span></div>
+      <div class="row" style="color:#FF3B30">撤回<span class="ch" style="color:#FFB4AF">${S('back','s')}</span></div>
+    </div>
+  </div>
+  <div class="cbar"><span class="pl">${S('mic','l')}</span><div class="fld">输入消息</div>
+    <span class="pl">${S('smile','l')}</span><span class="pl">${S('plusc','l')}</span></div>`);
+
+const quoting = () => wrap(`${status()}
+  ${bar('象象')}
+  <div class="chat">
+    <div class="ln"><div><div class="b">晚上一起吃饭？</div></div></div>
+    <div class="ln me"><div><div class="b m q"><div class="quote">象象：晚上一起吃饭？</div>好呀，几点？</div></div></div>
+  </div>
+  <div style="flex:none;display:flex;align-items:center;gap:8px;margin:0 12px 6px;padding:8px 12px;
+    border-radius:12px;background:rgba(255,255,255,.8);font-size:11px;color:#8A93A0">
+    <span style="width:2px;height:26px;background:var(--blue);border-radius:1px"></span>
+    引用 象象：晚上一起吃饭？<span style="margin-left:auto">✕</span></div>
+  <div class="cbar"><span class="pl">${S('mic','l')}</span><div class="fld">输入消息</div>
+    <span class="pl">${S('smile','l')}</span><span class="pl">${S('plusc','l')}</span></div>`);
+
+const viewer = () => wrap(`${status()}
+  <div class="viewer">
+    <img src="${A.ph1}" alt="">
+    <div class="bar">
+      <span>${S('file','l')}转发</span><span>${S('folder','l')}保存</span>
+      <span>${S('eye','l')}原图</span><span>${S('more','l')}更多</span>
+    </div>
+  </div>`);
+
+const recording = () => wrap(`${status()}
+  ${bar('象象')}
+  <div class="recwrap">
+    <div class="bub">${S('mic','l')}</div>
+    <div class="wv">${wave(14)}</div>
+    <div style="font-size:12px;color:#8A93A0">松开发送 · 上滑取消</div>
+  </div>
+  <div class="cbar" style="background:rgba(74,139,246,.10)"><span class="pl">${S('mic','l')}</span>
+    <div class="fld" style="background:#fff;color:var(--blue)">正在录音 00:03…</div>
+    <span class="pl">${S('smile','l')}</span><span class="pl">${S('plusc','l')}</span></div>`);
+
+const forward = () => wrap(`${status()}
+  ${bar('转发到…')}
+  <div class="srch">${S('search','s')}搜索聊天、联系人</div>
+  <div class="ghead">最近聊天</div>
+  <div class="grp">
+    <div class="row tall">${im(A.grpAll,'m')}<span style="font-size:12.5px">测试群</span>${ck(true)}</div>
+    <div class="row tall">${im(A.xiang,'m')}<span style="font-size:12.5px">象象</span>${ck(true)}</div>
+    <div class="row tall">${im(A.wang,'m')}<span style="font-size:12.5px">星皓</span>${ck(false)}</div>
+  </div>
+  <div class="ghead">好友</div>
+  <div class="grp">
+    <div class="row tall">${im(A.alex,'m')}<span style="font-size:12.5px">Alex</span>${ck(false)}</div>
+    <div class="row tall">${im(A.liming,'m')}<span style="font-size:12.5px">李明</span>${ck(false)}</div>
+  </div>
+  <div class="mbar" style="border-top:0">
+    <span><span class="pv">已选 2 个</span><br><span class="sub">转发后对方能直接看到内容</span></span>
+    <span class="sendb" style="width:auto;height:36px;border-radius:18px;padding:0 18px;font-size:13px">转发(2)</span></div>`);
+
+const burnChat = () => wrap(`${status()}
+  ${bar('测试群')}
+  <div class="burnbar">${S('fire','s')}阅后即焚已开启 · 看到的 10 秒后自动销毁</div>
+  <div class="chat">
+    <div class="sysmsg">老王 撤回了一条消息</div>
+    <div class="ln"><div><div class="b">照片你看完就没了</div></div></div>
+    <div class="ln me"><div><div class="b m">收到，已经看过了</div></div></div>
+    <div style="text-align:center;font-size:10.5px;color:#F2557D">🔥 一条消息已焚毁</div>
+  </div>
+  <div class="cbar"><span class="pl">${S('mic','l')}</span><div class="fld">输入消息</div>
+    <span class="pl">${S('smile','l')}</span><span class="pl">${S('plusc','l')}</span></div>`);
+
+/* ---------- ⑤ 资料：好友更多菜单 / 我的资料 / 改昵称 / 换头像 ---------- */
+const profMore = () => wrap(`${status()}
+  ${bar('象象')}
+  <div class="chat" style="position:relative;padding-top:10px">
+    <div class="veil"></div>
+    <div class="prof" style="position:relative;z-index:1">
+      <div class="pav" style="margin:0 auto">${im(A.xiang,'xl')}<span class="ondot"></span></div>
+      <div class="nm">象象</div><div class="stt"><i></i>在线</div>
+    </div>
+    <div style="position:relative;z-index:30;margin:4px 24px 0 auto;width:176px;background:rgba(255,255,255,.97);
+      border-radius:14px;box-shadow:0 16px 40px rgba(16,32,64,.2);overflow:hidden;font-size:12.5px">
+      <div class="row">设置备注<span class="ch">${S('text','s')}</span></div>
+      <div class="row">加入黑名单<span class="ch">${S('bellslash','s')}</span></div>
+      <div class="row">投诉<span class="ch">${S('info','s')}</span></div>
+      <div class="row" style="color:#FF3B30">删除联系人<span class="ch" style="color:#FFB4AF">${S('back','s')}</span></div>
+    </div>
+  </div>`);
+
+const myProfile = () => wrap(`${status()}
+  ${bar('我的资料')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall"><span style="font-size:12.5px">头像</span>
+      <span style="margin-left:auto">${im(A.xiang,'n')}</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">昵称</span><span class="v">象象</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">性别</span><span class="v">不显示</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">个性签名</span><span class="v">还没写</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row tall"><span style="font-size:12.5px">BB鸡号</span><span class="v">10086</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">绑定邮箱</span><span class="v">xiang@example.com</span><span class="ch">${S('chev','s')}</span></div>
+  </div>`);
+
+const editNick = () => wrap(`${status()}
+  ${bar('改昵称')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall"><span style="font-size:12.5px">象象</span><span class="v">2/12</span></div>
+  </div>
+  <div class="tip" style="margin-top:10px">昵称最长 12 个字，改完好友那边会看到新的。</div>
+  <div style="margin:auto 14px 20px"><div class="cta" style="height:44px">保存</div></div>`);
+
+const avatarPick = () => wrap(`${status()}
+  ${bar('换头像')}
+  <div class="sheet">
+    <div class="hh">换头像</div>
+    <div class="grp" style="border-radius:16px">
+      <div class="row ctr" style="min-height:48px;font-size:13.5px">从相册选择</div>
+      <div class="row ctr" style="min-height:48px;font-size:13.5px">拍一张</div>
+      <div class="row ctr" style="min-height:48px;font-size:13.5px">用系统头像</div>
+    </div>
+    <div class="cancel">取消</div>
+  </div>`);
+
+/* ---------- ⑥ 加好友 / 扫一扫 / 建群选人 ---------- */
+const addFriend = () => wrap(`${status()}
+  ${bar('添加好友')}
+  <div class="srch" style="background:rgba(255,255,255,.9)">${S('search','s')}搜 BB鸡号 / 邮箱</div>
+  <div class="grp" style="margin-top:2px">
+    <div class="row tall">${im(A.zhang,'m')}
+      <div><div style="font-size:12.5px;font-weight:600">赵飞</div>
+        <div style="font-size:10.5px;color:#8A93A0;margin-top:3px">BB鸡号 12345678</div></div>
+      <span style="margin-left:auto;background:linear-gradient(180deg,#79B0FF,#4A8BF6);color:#fff;font-size:11.5px;
+        font-weight:500;border-radius:9px;padding:6px 12px">加好友</span></div>
+  </div>
+  <div class="tip" style="margin-top:12px">对方同意之前，你只能发一条申请说明。</div>
+  <div class="ghead">可能认识的人</div>
+  <div class="grp">
+    <div class="row tall">${im(A.yufang,'m')}<span style="font-size:12.5px">玉芳</span><span class="v">同群 2 个</span><span class="ch">${S('plus','s')}</span></div>
+    <div class="row tall">${im(A.liming,'m')}<span style="font-size:12.5px">李明</span><span class="v">同群 1 个</span><span class="ch">${S('plus','s')}</span></div>
+  </div>`);
+
+const scan = () => wrap(`${status()}
+  <div style="flex:1;background:#0B0D12;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative">
+    <div style="color:#fff;font-size:12px;position:absolute;top:14px">扫一扫</div>
+    <div style="width:180px;height:180px;border-radius:18px;position:relative;
+      background:linear-gradient(160deg,#26303F,#161C26)">
+      <span style="position:absolute;left:10px;top:10px;width:26px;height:26px;border-left:2.5px solid #4A8BF6;border-top:2.5px solid #4A8BF6;border-radius:4px 0 0 0"></span>
+      <span style="position:absolute;right:10px;top:10px;width:26px;height:26px;border-right:2.5px solid #4A8BF6;border-top:2.5px solid #4A8BF6;border-radius:0 4px 0 0"></span>
+      <span style="position:absolute;left:10px;bottom:10px;width:26px;height:26px;border-left:2.5px solid #4A8BF6;border-bottom:2.5px solid #4A8BF6;border-radius:0 0 0 4px"></span>
+      <span style="position:absolute;right:10px;bottom:10px;width:26px;height:26px;border-right:2.5px solid #4A8BF6;border-bottom:2.5px solid #4A8BF6;border-radius:0 0 4px 0"></span>
+      <span style="position:absolute;left:12px;right:12px;top:50%;height:1.5px;background:linear-gradient(90deg,transparent,#4A8BF6,transparent)"></span>
+    </div>
+    <div style="color:rgba(255,255,255,.62);font-size:11.5px;margin-top:18px;text-align:center;line-height:1.7">
+      对准好友的二维码<br>扫到就自动跳进「加好友」</div>
+    <div style="position:absolute;bottom:26px;display:flex;gap:26px;color:#fff;font-size:11px">
+      <span style="opacity:.6">相册</span><span>扫码</span><span style="opacity:.6">我的码</span></div>
+  </div>`);
+
+const pickMembers = () => wrap(`${status()}
+  ${bar('选择联系人')}
+  <div class="srch">${S('search','s')}搜索联系人</div>
+  <div class="ghead">已选 3 人</div>
+  <div class="grp">
+    <div style="display:flex;gap:8px;padding:10px 16px">
+      ${[A.xiang,A.wang,A.alex].map(x=>im(x,'m')).join('')}
+      <span style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.7);border:1px dashed #C9D2DE;
+        display:grid;place-items:center;color:#9AA3B0">${S('plus','s')}</span>
+    </div>
+  </div>
+  <div class="ghead">好友</div>
+  <div class="grp">
+    <div class="row tall">${im(A.grpAll,'m')}<span style="font-size:12.5px">测试群</span>${ck(true)}</div>
+    <div class="row tall">${im(A.xiang,'m')}<span style="font-size:12.5px">象象</span>${ck(true)}</div>
+    <div class="row tall">${im(A.wang,'m')}<span style="font-size:12.5px">星皓</span>${ck(true)}</div>
+    <div class="row tall">${im(A.liming,'m')}<span style="font-size:12.5px">李明</span>${ck(false)}</div>
+  </div>
+  <div class="mbar" style="border-top:0"><span style="font-size:12.5px;color:#8A93A0">不给群名也能建，建完再改</span>
+    <span class="sendb" style="width:auto;height:36px;border-radius:18px;padding:0 18px;font-size:13px">创建(3)</span></div>`);
+
+/* ---------- ⑦ 群：设置 / 成员 / 二维码 / 邀请 ---------- */
+const groupSetting = () => wrap(`${status()}
+  ${bar('测试群')}
+  <div class="ghead">群成员 8 人</div>
+  <div class="grp" style="padding-bottom:4px">
+    <div class="mem">
+      ${[A.grpAll,A.xiang,A.wang,A.alex,A.liming,A.design,A.prod,A.zhang].map((x,i)=>
+        `<div class="m">${im(x,'')}<span>${['老王','象象','星皓','Alex','李明','设计','产品','张伟'][i]}</span></div>`).join('')}
+      <div class="m add"><span class="av" style="display:grid;place-items:center;color:#9AA3B0">${S('plus','s')}</span><span>邀请</span></div>
+    </div>
+    <div class="row" style="font-size:12.5px;color:#8A93A0">查看全部 8 人<span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row tall"><span style="font-size:12.5px">群名称</span><span class="v">测试群</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">群公告</span><span class="v">周五团建，记得回复报名</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">群二维码</span><span class="ch">${S('qr','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row tall"><span style="font-size:12.5px">消息免打扰</span><span class="sw on"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">置顶聊天</span><span class="sw"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">我在本群的昵称</span><span class="v">象象</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp"><div class="row danger" style="color:#FF3B30;justify-content:center;min-height:44px">退出群聊</div></div>`);
+
+const groupMembers = () => wrap(`${status()}
+  ${bar('群成员（8）')}
+  <div class="ghead">群主</div>
+  <div class="grp"><div class="row tall">${im(A.grpAll,'m')}<span style="font-size:12.5px">老王</span>
+    <span class="chip" style="margin-left:auto">群主</span></div></div>
+  <div class="ghead">管理员</div>
+  <div class="grp"><div class="row tall">${im(A.xiang,'m')}<span style="font-size:12.5px">象象</span>
+    <span class="chip" style="margin-left:auto">管理员</span></div></div>
+  <div class="ghead">群成员（6）</div>
+  <div class="grp">
+    ${[['星皓',A.wang,1],['Alex',A.alex,1],['李明',A.liming,0],['设计小组',A.design,0],['产品经理',A.prod,0],['张伟',A.zhang,0]].map(x=>
+      `<div class="row tall">${im(x[1],'m')}<span style="font-size:12.5px">${x[0]}</span>
+        <span class="v" style="margin-left:auto">${x[2]?'在线':'3 小时前'}</span><span class="ch">${S('chev','s')}</span></div>`).join('')}
+  </div>
+  <div class="btn">邀请好友进群</div>`);
+
+const groupQR = () => wrap(`${status()}
+  ${bar('群二维码')}
+  <div class="bigqr">
+    <div class="qrbox"><span class="fake"></span></div>
+    <div style="font-size:13px;font-weight:600;margin-top:14px">测试群</div>
+    <div style="font-size:11px;color:#8A93A0;margin-top:4px">扫码就能申请加入 · 7 天后失效</div>
+    <div style="display:flex;gap:10px;margin-top:auto;margin-bottom:20px;width:100%">
+      <div class="btn" style="flex:1;margin:0;background:rgba(255,255,255,.85);color:#4A8BF6">保存到相册</div>
+      <div class="btn" style="flex:1;margin:0">分享给好友</div>
+    </div>
+  </div>`);
+
+const invite = () => wrap(`${status()}
+  ${bar('邀请好友进群')}
+  <div class="srch">${S('search','s')}搜索好友</div>
+  <div class="grp">
+    <div class="row tall">${im(A.alex,'m')}<span style="font-size:12.5px">Alex</span>${ck(true)}</div>
+    <div class="row tall">${im(A.liming,'m')}<span style="font-size:12.5px">李明</span>${ck(true)}</div>
+    <div class="row tall">${im(A.yufang,'m')}<span style="font-size:12.5px">玉芳</span>${ck(false)}</div>
+  </div>
+  <div class="grp" style="margin-top:12px">
+    <div class="row tall"><span style="font-size:12.5px">邀请语</span><span class="v">一起来聊聊吧</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="tip" style="margin-top:10px">对方会收到一条「谁邀请你进群」的消息，同意后才进群。</div>
+  <div class="btn">邀请（2 人）</div>`);
+
+/* ---------- ⑧ 通话 ---------- */
+const callIn = () => wrap(`${status()}
+  <div class="call" style="padding-top:4px">
+    <div class="topm" style="align-self:center;color:rgba(255,255,255,.6);font-size:11px">语音通话来电</div>
+    <img class="bigav" src="${A.wang}" alt="">
+    <div class="nm">星皓</div>
+    <div class="stt">邀请你语音通话…</div>
+    <div style="flex:1"></div>
+    <div class="ctrls" style="grid-template-columns:repeat(2,1fr);margin-bottom:34px">
+      <div class="cb hang"><i>${S('phone','l')}</i>拒绝</div>
+      <div class="cb ans"><i>${S('phone','l')}</i>接听</div>
+    </div>
+  </div>`);
+
+const callVoice = () => wrap(`${status()}
+  <div class="call">
+    <div class="topm" style="align-self:center;color:rgba(255,255,255,.6);font-size:11px">语音通话中</div>
+    <img class="bigav" src="${A.wang}" alt="">
+    <div class="nm">星皓</div>
+    <div class="stt">00:42</div>
+    <div class="ctrls" style="grid-template-columns:repeat(3,1fr)">
+      <div class="cb"><i>${S('mic','l')}</i>静音</div>
+      <div class="cb"><i>${S('globe','l')}</i>免提</div>
+      <div class="cb"><i>${S('video','l')}</i>切视频</div>
+      <div class="cb"><i>${S('people','l')}</i>加人</div>
+      <div class="cb"><i>${S('text','l')}</i>最小化</div>
+      <div class="cb hang"><i>${S('phone','l')}</i>挂断</div>
+    </div>
+  </div>`);
+
+const callVideo = () => wrap(`${status()}
+  <div class="call" style="position:relative;padding:0">
+    <div class="veil" style="background:linear-gradient(180deg,rgba(8,12,22,.45),rgba(8,12,20,.75));z-index:1"></div>
+    <div style="position:absolute;inset:0;z-index:0"><img src="${A.ph1}" alt="" style="width:100%;height:100%;object-fit:cover"></div>
+    <img class="lv" src="${A.xiang}" alt="">
+    <div style="position:absolute;top:52px;left:0;right:0;text-align:center;z-index:3;color:#fff">
+      <div style="font-size:15px;font-weight:600">星皓</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.72);margin-top:4px">视频通话中 · 01:12</div>
+    </div>
+    <div class="ctrls" style="position:absolute;left:0;right:0;bottom:0;z-index:3;padding:0 20px 16px;
+      grid-template-columns:repeat(4,1fr)">
+      <div class="cb"><i>${S('mic','l')}</i>静音</div>
+      <div class="cb"><i>${S('video','l')}</i>关摄像头</div>
+      <div class="cb"><i>${S('video2','l')}</i>翻转</div>
+      <div class="cb hang"><i>${S('phone','l')}</i>挂断</div>
+    </div>
+  </div>`);
+
+const callGroup = () => wrap(`${status()}
+  <div class="call" style="position:relative;padding:0">
+    <div style="position:absolute;top:14px;left:0;right:0;text-align:center;z-index:3;color:#fff">
+      <div style="font-size:14px;font-weight:600">测试群通话</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:3px">4 人在线 · 03:08</div>
+    </div>
+    <div class="gg">
+      <div class="t"><img src="${A.grpAll}" alt=""><span>老王</span></div>
+      <div class="t"><img src="${A.wang}" alt=""><span>星皓</span></div>
+      <div class="t"><img src="${A.xiang}" alt=""><span>你</span></div>
+      <div class="t"><img src="${A.liming}" alt=""><span>李明</span></div>
+    </div>
+    <div class="ctrls" style="position:absolute;left:0;right:0;bottom:0;z-index:3;padding:0 20px 14px;
+      grid-template-columns:repeat(4,1fr)">
+      <div class="cb"><i>${S('mic','l')}</i>静音</div>
+      <div class="cb"><i>${S('video','l')}</i>摄像头</div>
+      <div class="cb"><i>${S('people','l')}</i>邀请</div>
+      <div class="cb hang"><i>${S('phone','l')}</i>挂断</div>
+    </div>
+  </div>`);
+
+/* ---------- ⑨ 媒体：视频 / 文件 ---------- */
+const mediaVideo = () => wrap(`${status()}
+  ${bar('媒体')}
+  <div class="seg"><span>图片</span><span class="on">视频</span><span>文件</span></div>
+  <div class="grid3">
+    ${G.slice(0,6).map((g,i)=>`<div class="cell"><img src="${g}" alt="">
+      <span style="position:absolute;left:6px;bottom:6px;color:#fff;font-size:9.5px;background:rgba(0,0,0,.4);
+        border-radius:5px;padding:1px 5px">▶ ${['00:12','01:04','00:38','02:20','00:57','01:33'][i]}</span></div>`).join('')}
+  </div>
+  <div class="mbar"><span><span class="pv">共 18 个视频</span><br><span class="sub">312 MB · 占手机空间</span></span></div>`);
+
+const mediaFile = () => wrap(`${status()}
+  ${bar('媒体')}
+  <div class="seg"><span>图片</span><span>视频</span><span class="on">文件</span></div>
+  <div class="grp" style="margin-top:2px">
+    <div class="row tall"><span class="ic c4" style="width:30px;height:30px;border-radius:9px">${S('file','s')}</span>
+      <div style="flex:1"><div style="font-size:12.5px;font-weight:500">需求定稿.md</div>
+        <div style="font-size:10.5px;color:#8A93A0;margin-top:2px">6 KB · 今天 09:12</div></div>
+      <span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span class="ic c3" style="width:30px;height:30px;border-radius:9px">${S('file','s')}</span>
+      <div style="flex:1"><div style="font-size:12.5px;font-weight:500">报价单.xlsx</div>
+        <div style="font-size:10.5px;color:#8A93A0;margin-top:2px">18 KB · 昨天</div></div>
+      <span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span class="ic c6" style="width:30px;height:30px;border-radius:9px">${S('file','s')}</span>
+      <div style="flex:1"><div style="font-size:12.5px;font-weight:500">安装包.zip</div>
+        <div style="font-size:10.5px;color:#8A93A0;margin-top:2px">42 MB · 昨天</div></div>
+      <span class="ch">${S('chev','s')}</span></div>
+  </div>`);
+
+/* ---------- ⑩ 设置：账号 / 隐私锁定 / 锁定流程 / 锁屏 / 伪装锁 ---------- */
+const account = () => wrap(`${status()}
+  ${bar('账号与安全')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall">${im(A.xiang,'m')}
+      <div><div style="font-size:12.5px;font-weight:600">象象</div>
+        <div style="font-size:10.5px;color:#8A93A0;margin-top:2px">登录账号 xiangxiang</div></div>
+      <span class="ch" style="margin-left:auto">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">BB鸡号</span><span class="v">10086</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row tall"><span style="font-size:12.5px">绑定邮箱</span><span class="v">xiang@example.com</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">修改密码</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">登录设备</span><span class="v">这台手机</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp"><div class="row danger" style="color:#FF3B30;justify-content:center;min-height:44px">退出登录</div></div>`);
+
+const privacy = () => wrap(`${status()}
+  ${bar('隐私与锁定')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall"><span style="font-size:12.5px">离开就锁</span><span class="sw on"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">锁定密码</span><span class="v">已设置（4 位）</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">锁屏显示</span><span class="v">隐藏消息内容</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row tall"><span style="font-size:12.5px">计算器伪装锁</span><span class="sw"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">允许面容 / 指纹解锁</span><span class="sw on"><i></i></span></div>
+  </div>
+  <div class="tip">锁上之后：中间是 logo，点「解锁」输 4 位密码才能进来。<b>不挡系统截屏</b>（锁着本来就看不到内容）。</div>
+  <div class="grp"><div class="row danger" style="color:#FF3B30;justify-content:center;min-height:44px">立刻锁定</div></div>`);
+
+const lockSetPw = () => wrap(`${status()}
+  ${bar('设置锁定密码')}
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding-top:30px">
+    <div style="font-size:14px;font-weight:600">设置 4 位数字密码</div>
+    <div style="font-size:11.5px;color:#8A93A0;margin-top:6px">不能和账号密码一样</div>
+    <div style="display:flex;gap:14px;margin:34px 0 0">
+      ${[1,1,1,0].map(x=>`<span style="width:12px;height:12px;border-radius:50%;border:1.4px solid #B4BECB;
+        background:${x?'linear-gradient(180deg,#79B0FF,#4A8BF6)':'transparent'};border-color:transparent"></span>`).join('')}
+    </div>
+    <div style="font-size:11px;color:#8A93A0;margin-top:16px">再输一遍确认</div>
+    <div style="margin-top:auto;margin-bottom:20px;width:100%">
+      <div class="cta" style="height:44px;opacity:.45">下一步（还差 1 位）</div>
+    </div>
+  </div>`);
+
+const lockAuto = () => wrap(`${status()}
+  ${bar('锁定规则')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall"><div style="flex:1"><div style="font-size:12.5px">离开就锁</div>
+      <div style="font-size:10.5px;color:#8A93A0;margin-top:3px">开了＝关掉页面就锁；关了＝任何情况都不锁</div></div>
+      <span class="sw on"><i></i></span></div>
+  </div>
+  <div class="ghead">锁上之后</div>
+  <div class="grp">
+    <div class="row tall"><span style="font-size:12.5px">立刻要求密码</span><span class="sw on"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">允许面容 / 指纹</span><span class="sw on"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">锁定时通知不显示内容</span><span class="sw on"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">锁屏时能接来电</span><span class="sw on"><i></i></span></div>
+  </div>
+  <div class="tip">关了「离开就锁」也可以随时手动锁：设置 → 隐私与锁定 → 立刻锁定。</div>`);
+
+const lockScreen = () => wrap(`${status()}
+  <div class="lockbg">
+    <div class="topm">9:41 · 10月6日 星期二</div>
+    <img class="bigav" src="${A.xiang}" alt="">
+    <div style="color:#fff;font-size:13px;margin-top:12px">象象</div>
+    <div class="kp">
+      <div class="big">输入锁定密码</div>
+      <div class="dots6">${[1,1,1,0].map(x=>`<i class="${x?'on':''}"></i>`).join('')}</div>
+      <div class="keys">
+        ${[1,2,3,4,5,6,7,8,9].map(k=>`<span class="k">${k}</span>`).join('')}
+        <span class="k gh"></span><span class="k">0</span><span class="k gh"></span>
+      </div>
+      <div style="color:rgba(255,255,255,.72);font-size:11px;margin-bottom:26px">面容 / 指纹 · 忘记密码？</div>
+    </div>
+  </div>`);
+
+const calcLock = () => wrap(`${status()}
+  <div class="calc">
+    <div class="out">1234</div>
+    <div class="kpd">
+      <span class="k f">AC</span><span class="k f">±</span><span class="k f">%</span><span class="k o">÷</span>
+      <span class="k">7</span><span class="k">8</span><span class="k">9</span><span class="k o">×</span>
+      <span class="k">4</span><span class="k">5</span><span class="k">6</span><span class="k o">−</span>
+      <span class="k">1</span><span class="k">2</span><span class="k">3</span><span class="k o">+</span>
+      <span class="k zero">0</span><span class="k">.</span><span class="k o">=</span>
+    </div>
+    <div class="hint">这看着就是个普通计算器 —— 输对密码才会进 BB鸡</div>
+  </div>`);
+
+/* ---------- ⑪ 设置：通知 / 保活 / 推送 / 教程 ---------- */
+const notifySet = () => wrap(`${status()}
+  ${bar('消息通知')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall"><span style="font-size:12.5px">新消息通知</span><span class="sw on"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">声音</span><span class="sw on"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">震动</span><span class="sw on"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">只在屏幕亮着时提醒</span><span class="sw"><i></i></span></div>
+  </div>
+  <div class="ghead">提醒什么</div>
+  <div class="grp">
+    <div class="row tall"><span style="font-size:12.5px">全部消息</span><span class="ch" style="color:var(--blue)">${S('check','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">只提醒 @我</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">群消息</span><span class="v">接收但不出声</span><span class="ch">${S('chev','s')}</span></div>
+  </div>`);
+
+const keepAlive = () => wrap(`${status()}
+  ${bar('后台保活')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall"><div style="flex:1"><div style="font-size:12.5px">后台保活</div>
+      <div style="font-size:10.5px;color:#8A93A0;margin-top:3px">开着更实时：来电直接弹、消息秒到；代价是费电</div></div>
+      <span class="sw on"><i></i></span></div>
+  </div>
+  <div class="ghead">保活用的通道</div>
+  <div class="grp">
+    <div class="row tall"><span style="font-size:12.5px">语音通话后台响铃</span><span class="sw on"><i></i></span></div>
+    <div class="row tall"><span style="font-size:12.5px">无声音乐保活</span><span class="sw on"><i></i></span></div>
+  </div>
+  <div class="tip">实话：iOS 切后台约 30 秒会被挂起，<b>保活只能延长、不可能常驻</b> ——
+    所以必须「保活 + 推送」两套一起用。</div>`);
+
+const pushText = () => wrap(`${status()}
+  ${bar('推送正文样式')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall"><div style="flex:1"><div style="font-size:12.5px">显示全部</div>
+      <div style="font-size:10.5px;color:#8A93A0;margin-top:3px">标题＝谁发的，正文＝内容</div></div>
+      <span class="ch" style="color:var(--blue)">${S('check','s')}</span></div>
+    <div class="row tall"><div style="flex:1"><div style="font-size:12.5px">只显示有新消息</div>
+      <div style="font-size:10.5px;color:#8A93A0;margin-top:3px">不写谁、不写内容</div></div>
+      <span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><div style="flex:1"><div style="font-size:12.5px">只显示谁发的</div>
+      <div style="font-size:10.5px;color:#8A93A0;margin-top:3px">写名字，不写内容</div></div>
+      <span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="ghead">效果预览</div>
+  <div style="margin:0 14px;background:rgba(255,255,255,.9);border-radius:16px;padding:12px 14px;
+    box-shadow:0 6px 18px rgba(16,32,64,.06)">
+    <div style="font-size:11px;color:#8A93A0">BB鸡 · 刚刚</div>
+    <div style="font-size:12.5px;font-weight:600;margin-top:6px">星皓</div>
+    <div style="font-size:12px;color:#4A5162;margin-top:2px">看我给你发的微信</div>
+  </div>`);
+
+const pushApi = () => wrap(`${status()}
+  ${bar('推送 API')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall"><span style="font-size:12.5px">推送通道</span><span class="v">Bark（自签 / 非巨魔）</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">服务器地址</span><span class="v">bbji.xkmd.cn</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><div style="flex:1"><div style="font-size:12.5px">Bark Key</div>
+      <div style="font-size:10.5px;color:#8A93A0;margin-top:3px">从 Bark App 里复制过来</div></div>
+      <span class="v">已填</span><span class="ch">${S('eye','s')}</span></div>
+  </div>
+  <div style="margin:14px 14px 0"><div class="cta" style="height:46px">保存并测试</div></div>
+  <div class="tip" style="margin-top:12px">保存后会立刻给你发一条测试推送，收到就说明通了。</div>
+  <div style="margin-top:auto;margin-bottom:22px;text-align:center">
+    <span style="color:var(--blue);font-size:12.5px">Bark 配置教程 ›</span>
+  </div>`);
+
+const barkGuide = () => wrap(`${status()}
+  ${bar('Bark 配置教程')}
+  <div style="flex:1;padding:2px 18px 0;display:flex;flex-direction:column">
+    <div style="font-size:22px;font-weight:700;letter-spacing:-.6px;margin-top:4px">Bark 配置教程</div>
+    <div style="font-size:11.5px;color:#8A93A0;margin-top:6px">三步搞定，不用越狱</div>
+    <div style="margin-top:18px">
+      ${[['1','App Store 搜 Bark 装上','不用注册，打开就有 Key'],
+         ['2','把 Key 复制到 BB鸡','设置 → 消息通知 → 推送 API'],
+         ['3','点「保存并测试」','手机上马上会收到一条测试推送']].map(x=>
+        `<div style="display:flex;gap:12px;margin-bottom:16px">
+          <span style="width:22px;height:22px;border-radius:50%;background:linear-gradient(180deg,#79B0FF,#4A8BF6);
+            color:#fff;font-size:11.5px;font-weight:700;display:grid;place-items:center;flex:none">${x[0]}</span>
+          <div><div style="font-size:13px;font-weight:600">${x[1]}</div>
+            <div style="font-size:11px;color:#8A93A0;margin-top:3px">${x[2]}</div></div></div>`).join('')}
+    </div>
+    <div style="font-size:12px;font-weight:600;margin-top:4px">收不到？按这四条查</div>
+    <div style="font-size:11.5px;color:#7E8796;line-height:2;margin-top:6px">
+      ① Bark 的通知权限是不是关了<br>② Key 有没有多复制了空格<br>③ 手机当时有没有网<br>④ 后台保活开了没（关了会延迟）
+    </div>
+    <div style="font-size:10.5px;color:#B4BECB;margin-top:12px">教程是从服务器拉的，改内容不用更新 App</div>
+  </div>`);
+
+/* ---------- ⑫ 通用 / 帮助 / 关于 ---------- */
+const general = () => wrap(`${status()}
+  ${bar('通用设置')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall"><span style="font-size:12.5px">主题</span><span class="v">跟随系统</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">字号</span><span class="v">标准</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">聊天背景</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="grp">
+    <div class="row tall"><span style="font-size:12.5px">自动下载图片</span><span class="v">仅 Wi-Fi</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">清空缓存</span><span class="v">126 MB</span><span class="ch">${S('chev','s')}</span></div>
+  </div>`);
+
+const help = () => wrap(`${status()}
+  ${bar('帮助与反馈')}
+  <div class="grp" style="margin-top:4px">
+    <div class="row tall"><span style="font-size:12.5px">常见问题</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">联系官方（发消息）</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">我是开发者 / 想部署服务器</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div class="ghead">我提过的</div>
+  <div class="grp">
+    <div class="row tall"><div><div style="font-size:12px">「希望手机端也能看到已读」</div>
+      <div style="font-size:10.5px;color:#0B9A57;margin-top:3px">官方回复：这版已经有啦</div></div></div>
+  </div>
+  <div class="btn" style="background:rgba(255,255,255,.85);color:#4A8BF6">写点反馈</div>`);
+
+const about = () => wrap(`${status()}
+  ${bar('关于我们')}
+  <div style="text-align:center;padding:24px 0 6px">
+    ${logo(66)}
+    <div style="font-size:16px;font-weight:700;margin-top:10px">BB鸡</div>
+    <div style="font-size:11.5px;color:#8A93A0;margin-top:4px">iOS 版 · v1.0.0（1）</div>
+  </div>
+  <div class="grp">
+    <div class="row tall"><span style="font-size:12.5px">检查更新</span><span class="v">已是最新</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">历史公告</span><span class="v">3 条</span><span class="ch">${S('chev','s')}</span></div>
+    <div class="row tall"><span style="font-size:12.5px">隐私政策</span><span class="ch">${S('chev','s')}</span></div>
+  </div>
+  <div style="text-align:center;font-size:10.5px;color:#B4BECB;margin-top:14px;line-height:1.8">
+    © 2026 BB鸡 · 手机端<br>服务器：bbji.xkmd.cn</div>`);
+
+document.getElementById('board').innerHTML = [
+  sec('① 首次进入', '启动 → 登录 / 注册 / 取名字 / 找回密码'),
+  cell('01','启动页','点 <b>开始使用</b> → 02 登录；点「已有账号，去登录」也到 02；新用户点下面那行 → 03', splash()),
+  cell('02','登录','填邮箱密码点 <b>登录</b> → 06 消息列表；点「忘记密码？」→ 05', login()),
+  cell('03','注册','填完点 <b>注册</b> → 04 取名字', register()),
+  cell('04','取名字','点头像 → 25 换头像；点 <b>进入 BB鸡</b> → 06 消息列表', nickname()),
+  cell('05','找回密码','重设完自动回 02 登录', forgot()),
+
+  sec('② 主界面（底部三个 Tab）','消息 / 通讯录 / 我，以及列表上的两种操作'),
+  cell('06','消息列表','点会话 → 12 单聊 / 19 群聊；点右上 <b>＋</b> → 26 新建聊天；<b>左滑一条</b> → 07；<b>长按一条</b> → 08；点底部 Tab → 09 / 11', messages()),
+  cell('07','会话左滑','露出「置顶 / 免打扰 / 删除」—— 点哪个执行哪个', swipeAct()),
+  cell('08','长按会话','弹出「标为已读 / 置顶 / 免打扰 / 删除聊天」', listMenu()),
+  cell('09','通讯录','点「新的朋友」→ 10；点「群聊」→ 30 / 31；点某个好友 → 21 资料页', contacts()),
+  cell('10','新的朋友','点 <b>同意</b> → 对方变好友，列表出现；点「拒绝」→ 这条消失', newFriends()),
+  cell('11','我','点头像/资料 → 23 我的资料；点「我的二维码」→ 32；点 <b>设置</b> → 41', me()),
+
+  sec('③ 聊天','输入框、长按消息、看图、录音、转发、群聊与阅后即焚'),
+  cell('12','单聊','点右上 <b>电话/摄像头</b> → 35 / 36；点 <b>＋</b> → 13；点图 → 16；按住麦克风 → 17；长按气泡 → 14', chat()),
+  cell('13','输入扩展面板','点「图片」→ 38 媒体选图；点「语音通话」→ 35；点「视频通话」→ 36', plusPanel()),
+  cell('14','长按消息','「引用」→ 15；「复制 / 转发」→ 18；「撤回」→ 气泡变灰字', msgMenu()),
+  cell('15','引用中','输入框上方出现引用条，点 ✕ 取消', quoting()),
+  cell('16','看图','底下四个动作：转发 / 保存 / 原图 / 更多', viewer()),
+  cell('17','录音中','松开发送，上滑取消', recording()),
+  cell('18','转发选人','勾一个或多个人，点 <b>转发(N)</b> → 回到 12 并显示已转发', forward()),
+  cell('19','群聊','顶部公告条可点开；点右上 <b>⋯</b> → 30 群设置', groupChat()),
+  cell('20','阅后即焚','设置里开「阅后即焚」后：看到 10 秒自动销毁，聊天里留一行灰字', burnChat()),
+
+  sec('④ 资料','好友资料 / 我的资料 / 改昵称 / 换头像'),
+  cell('21','好友资料','点「发消息」→ 12；点电话/视频 → 35 / 36；点「创建群聊」→ 29；点右上 <b>⋯</b> → 22', profile()),
+  cell('22','资料「⋯」菜单','设置备注 / 加入黑名单 / 投诉 / 删除联系人', profMore()),
+  cell('23','我的资料','点头像 → 25；点「昵称」→ 24；点「绑定邮箱」→ 42', myProfile()),
+  cell('24','改昵称','输完点 <b>保存</b> → 回 23', editNick()),
+  cell('25','换头像','底部弹层：相册 / 拍一张 / 系统头像', avatarPick()),
+
+  sec('⑤ 新建 · 加好友 · 建群','三个大圆按钮点下去分别去哪'),
+  cell('26','新建聊天','点 <b>新建群聊</b> → 29；点 <b>添加好友</b> → 27；点 <b>扫一扫</b> → 28', newChat()),
+  cell('27','添加好友','搜 BB鸡号 → 点 <b>加好友</b> → 对方在 10 里看到请求', addFriend()),
+  cell('28','扫一扫','扫到二维码 → 自动跳到 27；点「我的码」→ 32', scan()),
+  cell('29','建群·选人','勾完点 <b>创建(N)</b> → 建好直接进 19 群聊', pickMembers()),
+
+  sec('⑥ 群','设置 / 成员 / 二维码 / 邀请'),
+  cell('30','群设置','点成员头像 → 31；点「群二维码」→ 32；点「邀请」→ 33；最下面「退出群聊」', groupSetting()),
+  cell('31','群成员','群主/管理员有标签；点一个人 → 21 资料页', groupMembers()),
+  cell('32','群二维码','保存到相册 / 分享给好友；扫这个码 → 27', groupQR()),
+  cell('33','邀请进群','勾人 + 写邀请语 → 点 <b>邀请</b> → 对方在 10 里同意才进群', invite()),
+
+  sec('⑦ 通话','来电 / 语音 / 视频 / 群通话'),
+  cell('34','来电卡片','点 <b>接听</b> → 35（或 36）；点「拒绝」→ 挂断，聊天里留一行通话记录', callIn()),
+  cell('35','语音通话中','静音 / 免提 / 切视频（→ 36）/ 加人 / 最小化 / 挂断', callVoice()),
+  cell('36','视频通话中','右上小窗是自己；可以关摄像头、翻转、挂断', callVideo()),
+  cell('37','群通话','2×2 成员网格 + 底部四个控制；点「邀请」→ 33', callGroup()),
+
+  sec('⑧ 媒体','从聊天 → 右上 ⋯ → 媒体进来的三个页签'),
+  cell('38','媒体 · 图片','三列网格，右上角可勾选；点 <b>选择</b> 进入多选，底下「预览(N)」', media()),
+  cell('39','媒体 · 视频','每个封面上有时长', mediaVideo()),
+  cell('40','媒体 · 文件','按时间倒序列出，点一行直接打开', mediaFile()),
+
+  sec('⑨ 设置 · 账号与隐私','设置主页 → 账号 / 锁定 / 锁屏 / 伪装锁'),
+  cell('41','设置主页','点「账号与安全」→ 42；点「隐私与锁定」→ 43；点「消息通知」→ 48；点「通用设置」→ 53', settings()),
+  cell('42','账号与安全','绑邮箱 / 改密码 / 登录设备 / 退出登录', account()),
+  cell('43','隐私与锁定','点「锁定密码」→ 44；点「离开就锁」那一行 → 45；点 <b>立刻锁定</b> → 46 锁屏', privacy()),
+  cell('44','设锁定密码','输两遍 4 位数字（不能和账号密码一样）→ 回 43', lockSetPw()),
+  cell('45','锁定规则','「离开就锁」开关 + 锁上之后的四条细项', lockAuto()),
+  cell('46','锁屏','输 4 位密码 → 回进去那一页；点「忘记密码」用账号密码解', lockScreen()),
+  cell('47','计算器伪装锁','开了之后锁屏就长这样：普通人看到的是计算器，输对密码才进 BB鸡', calcLock()),
+
+  sec('⑩ 设置 · 通知与推送','通知 / 保活 / 推送正文 / Bark 教程'),
+  cell('48','消息通知','开关三项 + 提醒范围；下面「推送正文样式」→ 50', notifySet()),
+  cell('49','后台保活','默认开，可以关；写清了代价（费电）和局限（iOS 不可能常驻）', keepAlive()),
+  cell('50','推送正文样式','三选一，下面有实时预览', pushText()),
+  cell('51','推送 API','填 Bark Key → 点 <b>保存并测试</b> 马上收到测试推送；<b>底部蓝色小字</b>「Bark 配置教程 ›」→ 52', pushApi()),
+  cell('52','Bark 配置教程','三步 + 收不到的四条排查；内容从服务器拉，改教程不用发版', barkGuide()),
+
+  sec('⑪ 设置 · 通用','通用 / 帮助 / 关于'),
+  cell('53','通用设置','主题 / 字号 / 聊天背景 / 自动下载 / 清缓存', general()),
+  cell('54','帮助与反馈','常见问题 / 联系官方 / 我提过的（能看到官方回复）', help()),
+  cell('55','关于我们','检查更新 / 历史公告 / 隐私政策 / 版本号', about()),
+].join('');
+</script>
+</body>
+</html>
