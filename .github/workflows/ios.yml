@@ -8,9 +8,13 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14
+    # macos-15 自带 Xcode 16（新版 xcodegen 生成的工程是 Xcode 16 格式，macos-14 的 Xcode 15 打不开）
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+
+      - name: 看看用的是哪个 Xcode
+        run: xcodebuild -version
 
       - name: 装工具（xcodegen 生成工程、ldid 做假签名）
         run: brew install xcodegen ldid
