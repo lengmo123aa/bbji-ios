@@ -3,11 +3,13 @@ import UIKit
 import PhotosUI
 
 /* ==================================================================
-   主界面（回 A：原生精修 / 重塑）
-   —— 完全自绘：不用系统 List、导航栏、TabView；材质用 .ultraThinMaterial，
-      动效全走 spring，交互补触感，字号字距照效果图一项一项写死。
-   本轮做的两页：06 消息列表、12 单聊（其余页面下一轮照同一套改）。
-   效果图对应：mobile-ui.html（v5 + v3 质感层）
+   主界面（原生精修 / 重塑）—— 第二轮
+   ⚠️ 关键认知（2026-10-07 定了）：效果图那套 HTML 是按 **270pt 宽**画框画的，
+      真机 iPhone 393pt → 效果图的数值搬到手机上会"小一圈、扁一圈"。
+      所以凡是"从效果图抄来的"数（字号/头像/行高/圆角/间距），一律 ×T.k（≈1.455）。
+      只有 iOS 自己的东西（安全区、原生手势）不乘。
+   本轮：全局放大 + 聊天贴底 + 长按自绘菜单(引用/复制/转发/撤回) + 引用发送与显示
+        + 我页 BB鸡号修对 + 通讯录加「群聊」行。
    ================================================================== */
 
 /// 列表滚动量（用来做"内容滚到栏下面才出现毛玻璃"的贴边效果）
@@ -57,8 +59,8 @@ struct MainTabs: View {
 /* ==================== 06 消息列表 ==================== */
 struct ChatListPage: View {
     @EnvironmentObject var store: Store
-    @State private var off: CGFloat = 0        // 列表滚了多少（贴边毛玻璃用）
-    @State private var openRow: String? = nil  // 当前左滑打开的那一行
+    @State private var off: CGFloat = 0
+    @State private var openRow: String? = nil
     @State private var q = ""
 
     private var list: [Conv] {
@@ -75,36 +77,34 @@ struct ChatListPage: View {
         }
     }
 
-    /* 大标题 + 搜索：照 .ltitle / .srch；
-       滚起来之后整条变成毛玻璃 + 一条 .5 的分线（iOS 的 scrollEdge 效果） */
     private var header: some View {
         VStack(spacing: 0) {
-            HStack(alignment: .bottom, spacing: 8) {
+            HStack(alignment: .bottom, spacing: 12) {
                 Text("消息")
-                    .font(.system(size: 25, weight: .bold))
-                    .kerning(-0.9)
+                    .font(.system(size: 25 * T.k, weight: .bold))
+                    .kerning(-0.9 * T.k)
                     .foregroundColor(T.ink)
                 Spacer(minLength: 0)
                 NavigationLink(destination: AddFriendView().environmentObject(store).navigationBarHidden(false)) {
                     Image(systemName: "plus.circle")
-                        .font(.system(size: 22, weight: .light))
+                        .font(.system(size: 22 * T.k, weight: .light))
                         .foregroundColor(T.blue)
                 }
                 .buttonStyle(PressStyle(scale: 0.88))
             }
-            .padding(.horizontal, 18).padding(.top, 2).padding(.bottom, 12)
+            .padding(.horizontal, 18 * T.k).padding(.top, 2).padding(.bottom, 12 * T.k)
 
-            HStack(spacing: 6) {
+            HStack(spacing: 9) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13 * T.k, weight: .medium))
                     .foregroundColor(Color(red: 0.60, green: 0.63, blue: 0.68))
                 ZStack(alignment: .leading) {
                     if q.isEmpty {
                         Text("搜索聊天、联系人、消息")
-                            .font(.system(size: 12)).foregroundColor(T.hint)
+                            .font(.system(size: 12 * T.k)).foregroundColor(T.hint)
                     }
                     TextField("", text: $q)
-                        .font(.system(size: 12))
+                        .font(.system(size: 12 * T.k))
                         .foregroundColor(T.ink)
                         .tint(T.blue)
                         .submitLabel(.search)
@@ -113,20 +113,20 @@ struct ChatListPage: View {
                 if !q.isEmpty {
                     Button { q = ""; H.tap() } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 13))
+                            .font(.system(size: 13 * T.k))
                             .foregroundColor(Color(red: 0.72, green: 0.76, blue: 0.81))
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 10).frame(height: 34)
+            .padding(.horizontal, 15).frame(height: 34 * T.k)
             .background(.ultraThinMaterial)
             .background(Color.white.opacity(0.58))
-            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(Color.white.opacity(0.60), lineWidth: 0.5))
             .shadow(color: Color(red: 0.063, green: 0.125, blue: 0.25).opacity(0.04), radius: 4, y: 2)
-            .padding(.horizontal, 14).padding(.bottom, 10)
+            .padding(.horizontal, 14 * T.k).padding(.bottom, 10 * T.k)
         }
         .background(
             ZStack {
@@ -153,7 +153,7 @@ struct ChatListPage: View {
                     row(c)
                 }
             }
-            .padding(.bottom, 14)
+            .padding(.bottom, 18)
         }
         .coordinateSpace(name: "chatlist")
         .onPreferenceChange(OffKey.self) { v in off = v }
@@ -161,7 +161,7 @@ struct ChatListPage: View {
     }
 
     private func row(_ c: Conv) -> some View {
-        SwipeRow(id: c.id, openID: $openRow, height: 54,
+        SwipeRow(id: c.id, openID: $openRow, height: 76,
                  tint: c.pinned ? T.pinBg : Color.clear,
                  actions: [
                     SwipeAct(title: "置顶", bg: AnyView(T.gradSwipeGray)) { store.togglePin(c.id) },
@@ -188,54 +188,52 @@ struct ChatListPage: View {
     }
 
     private var empty: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 8) {
-                Text(q.isEmpty ? (store.connected ? "还没有聊天" : "连接中…") : "没找到")
-                    .font(.system(size: 15, weight: .semibold)).foregroundColor(T.ink)
-                Text(q.isEmpty ? "在电脑端先跟人聊两句，这边就会出现" : "换个词试试")
-                    .font(.system(size: 12)).foregroundColor(T.sec2)
-            }
-            .frame(maxWidth: .infinity).padding(.top, 90)
-            Spacer(minLength: 0)
+        VStack(spacing: 12) {
+            Text(q.isEmpty ? (store.connected ? "还没有聊天" : "连接中…") : "没找到")
+                .font(.system(size: 22, weight: .semibold)).foregroundColor(T.ink)
+            Text(q.isEmpty ? "在电脑端先跟人聊两句，这边就会出现" : "换个词试试")
+                .font(.system(size: 17)).foregroundColor(T.sec2)
         }
+        .frame(maxWidth: .infinity).padding(.top, 120)
+        Spacer(minLength: 0)
     }
 }
 
-/// 一行会话（v3 的 .li：padding 4/16、头像 46、名字 14/600/字距 -.25、预览 12.5、时间 11、红点 18）
+/// 一行会话（×k 之后：头像 64 / 名字 20 / 预览 18 / 时间 15 / 行高 76）
 private struct ConvRow: View {
     let c: Conv
     var avatar: String = ""
     var body: some View {
-        HStack(spacing: 11) {
-            Ava(name: c.name, size: 46, online: c.isGroup ? nil : c.online, img: avatar)
-            VStack(alignment: .leading, spacing: 3) {
+        HStack(spacing: 16) {
+            Ava(name: c.name, size: 64, online: c.isGroup ? nil : c.online, img: avatar)
+            VStack(alignment: .leading, spacing: 4) {
                 Text(c.name)
-                    .font(.system(size: 14, weight: .semibold))
-                    .kerning(-0.25)
+                    .font(.system(size: 20, weight: .semibold))
+                    .kerning(-0.36)
                     .foregroundColor(T.ink)
                     .lineLimit(1)
                 Text(c.text)
-                    .font(.system(size: 12.5))
+                    .font(.system(size: 18))
                     .foregroundColor(T.sec2)
                     .lineLimit(1)
             }
-            Spacer(minLength: 6)
-            VStack(alignment: .trailing, spacing: 6) {
-                Text(timeText(c.ts)).font(.system(size: 11)).foregroundColor(T.ter2)
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 9) {
+                Text(timeText(c.ts)).font(.system(size: 15)).foregroundColor(T.ter2)
                 if c.muted {
-                    Image(systemName: "bell.slash.fill").font(.system(size: 11)).foregroundColor(T.ter2)
+                    Image(systemName: "bell.slash.fill").font(.system(size: 15)).foregroundColor(T.ter2)
                 } else if c.unread > 0 {
                     BadgeNum(n: c.unread)
                 }
             }
         }
-        .padding(.horizontal, 16).padding(.vertical, 4)
-        .frame(height: 54)
+        .padding(.horizontal, 20).padding(.vertical, 6)
+        .frame(height: 76)
         .contentShape(Rectangle())
     }
 }
 
-/* ==================== 左滑（自绘，照 07 会话左滑） ==================== */
+/* ==================== 左滑（自绘） ==================== */
 struct SwipeAct: Identifiable {
     let id = UUID()
     let title: String
@@ -246,7 +244,7 @@ struct SwipeAct: Identifiable {
 struct SwipeRow<Content: View>: View {
     let id: String
     @Binding var openID: String?
-    var height: CGFloat = 54
+    var height: CGFloat = 76
     var tint: Color = .clear
     let actions: [SwipeAct]
     @ViewBuilder var content: () -> Content
@@ -255,12 +253,11 @@ struct SwipeRow<Content: View>: View {
     @State private var dragging = false
     @State private var crossed = false
 
-    private var width: CGFloat { CGFloat(actions.count) * 56 }
+    private var width: CGFloat { CGFloat(actions.count) * 80 }
     private var reveal: CGFloat { max(0, -dx) }
 
     var body: some View {
         ZStack(alignment: .trailing) {
-            // 后面：露出多少就摆多少（从右边往外推）
             HStack(spacing: 0) {
                 ForEach(actions) { a in
                     Button {
@@ -270,9 +267,9 @@ struct SwipeRow<Content: View>: View {
                         a.action()
                     } label: {
                         a.bg
-                            .frame(width: 56, height: height)
+                            .frame(width: 80, height: height)
                             .overlay(Text(a.title)
-                                .font(.system(size: 11, weight: .medium))
+                                .font(.system(size: 15, weight: .medium))
                                 .foregroundColor(.white))
                     }
                     .buttonStyle(.plain)
@@ -307,7 +304,6 @@ struct SwipeRow<Content: View>: View {
             .onChanged { v in
                 let w = v.translation.width, h = v.translation.height
                 if !dragging {
-                    // 先判断是横着划还是上下滚：竖着的一律不算（不然列表没法滚）
                     guard abs(w) > abs(h) * 1.25, abs(w) > 4 else { return }
                     dragging = true
                 }
@@ -343,11 +339,14 @@ struct ChatScreen: View {
     @State private var draft = ""
     @State private var pick: PhotosPickerItem? = nil
     @State private var sending = false
-    @State private var off: CGFloat = 0            // 消息滚了多少
-    @State private var edgeX: CGFloat = 0          // 左边缘返回的手势位移
-    @State private var viewer: Msg? = nil          // 看图
+    @State private var off: CGFloat = 0
+    @State private var edgeX: CGFloat = 0
+    @State private var viewer: Msg? = nil
     @State private var vDrag: CGFloat = 0
     @State private var tipText = ""
+    @State private var quoting: Quote? = nil        // 正在引用的那条
+    @State private var menuFor: Msg? = nil          // 长按弹出的菜单
+    @State private var forwardMsg: Msg? = nil       // 转发选人
 
     private var thread: [Msg] { store.thread(cid) }
     private var peer: String { store.name(of: cid, isGroup: isGroup) }
@@ -363,11 +362,11 @@ struct ChatScreen: View {
                 inputBar
             }
             .offset(x: edgeX)
-            // 左边缘返回（自绘导航栏没有系统手势，这里自己补一个：
-            // 只认从最左边 34pt 起手、且是横着划的，不会挡住顶栏那颗返回键）
             .simultaneousGesture(backDrag)
 
             if let v = viewer { viewerLayer(v) }
+            if let mm = menuFor { menuLayer(mm) }
+            if forwardMsg != nil { forwardLayer }
             if !tipText.isEmpty { toastLayer }
         }
         .navigationBarHidden(true)
@@ -388,33 +387,33 @@ struct ChatScreen: View {
         }
     }
 
-    /* ---------- 顶栏（.navbar：高 42 / 头像 30 / 名字 14.5/600/字距 -.2） ---------- */
+    /* ---------- 顶栏（.navbar 42 ×k ≈ 58 / 头像 30→40 / 名字 14.5→20） ---------- */
     private var navbar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 12) {
             Button {
                 H.tap()
                 pm.wrappedValue.dismiss()
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 24, weight: .semibold))
                     .foregroundColor(T.blue)
-                    .frame(width: 16, height: 30, alignment: .leading)
+                    .frame(width: 24, height: 40, alignment: .leading)
             }
             .buttonStyle(PressStyle(scale: 0.85))
 
-            Ava(name: peer, size: 30,
+            Ava(name: peer, size: 40,
                 online: isGroup ? nil : (store.people[cid]?.online ?? false),
                 img: peerAv)
 
             Text(peer)
-                .font(.system(size: 14.5, weight: .semibold))
-                .kerning(-0.2)
+                .font(.system(size: 20, weight: .semibold))
+                .kerning(-0.29)
                 .foregroundColor(T.ink)
                 .lineLimit(1)
 
             Spacer(minLength: 0)
 
-            HStack(spacing: 13) {
+            HStack(spacing: 19) {
                 if isGroup {
                     NavigationLink(destination: GroupSettingsView(gid: cid)
                         .environmentObject(store).navigationBarHidden(false)) {
@@ -431,7 +430,7 @@ struct ChatScreen: View {
                 }
             }
         }
-        .padding(.horizontal, 14).frame(height: 42)
+        .padding(.horizontal, 14 * T.k).frame(height: 58)
         .background(
             ZStack {
                 Rectangle().fill(.ultraThinMaterial)
@@ -446,115 +445,139 @@ struct ChatScreen: View {
     }
 
     private func navIcon(_ name: String) -> some View {
-        Image(systemName: name).font(.system(size: 17, weight: .regular)).foregroundColor(T.blue)
+        Image(systemName: name).font(.system(size: 24, weight: .regular)).foregroundColor(T.blue)
     }
 
-    /* ---------- 消息区（.chat：padding 4/14/8 + 行距 8） ---------- */
+    /* ---------- 消息区（.chat ×k；少消息时贴着输入框往下靠，别顶在上面留一大片空） ---------- */
     private var msgs: some View {
-        ScrollViewReader { sp in
-            ScrollView {
-                LazyVStack(spacing: 8) {
-                    Color.clear.frame(height: 0)
-                        .background(GeometryReader { g in
-                            Color.clear.preference(key: OffKey.self,
-                                                   value: -g.frame(in: .named("chatspace")).minY)
-                        })
-                    if let f = thread.first {
-                        Text(dayText(f.ts))
-                            .font(.system(size: 10.5))
-                            .foregroundColor(T.ter2)
-                            .frame(maxWidth: .infinity)
-                            .padding(.bottom, 2)
+        GeometryReader { geo in
+            ScrollViewReader { sp in
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        Color.clear.frame(height: 0)
+                            .background(GeometryReader { g in
+                                Color.clear.preference(key: OffKey.self,
+                                                       value: -g.frame(in: .named("chatspace")).minY)
+                            })
+                        if let f = thread.first {
+                            Text(dayText(f.ts))
+                                .font(.system(size: 15))
+                                .foregroundColor(T.ter2)
+                                .frame(maxWidth: .infinity)
+                                .padding(.bottom, 2)
+                        }
+                        ForEach(thread) { m in
+                            Bubble(m: m, mine: m.from == store.meUserId, peer: peer,
+                                   peerAv: peerAv, isGroup: isGroup,
+                                   onPic: { mm in viewer = mm },
+                                   onMenu: { mm in menuFor = mm })
+                                .id(m.id)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+                        Color.clear.frame(height: 1).id("bottom")
                     }
-                    ForEach(thread) { m in
-                        Bubble(m: m, mine: m.from == store.meUserId, peer: peer,
-                               peerAv: peerAv, isGroup: isGroup,
-                               onPic: { mm in viewer = mm })
-                            .id(m.id)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
-                    Color.clear.frame(height: 1).id("bottom")
+                    .padding(.horizontal, 14 * T.k).padding(.top, 6).padding(.bottom, 10)
+                    .frame(minHeight: geo.size.height, alignment: .bottom)
+                    .animation(.spring(response: 0.35, dampingFraction: 0.86), value: thread.count)
                 }
-                .padding(.horizontal, 14).padding(.top, 4).padding(.bottom, 10)
-                .animation(.spring(response: 0.35, dampingFraction: 0.86), value: thread.count)
-            }
-            .coordinateSpace(name: "chatspace")
-            .onPreferenceChange(OffKey.self) { v in off = v }
-            .scrollDismissesKeyboard(.interactively)
-            .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
+                .coordinateSpace(name: "chatspace")
+                .onPreferenceChange(OffKey.self) { v in off = v }
+                .scrollDismissesKeyboard(.interactively)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
+                        sp.scrollTo("bottom", anchor: .bottom)
+                    }
+                }
+                .onChange(of: thread.count) { _ in
                     sp.scrollTo("bottom", anchor: .bottom)
                 }
             }
-            .onChange(of: thread.count) { _ in
-                sp.scrollTo("bottom", anchor: .bottom)
-            }
         }
     }
 
-    /* ---------- 输入条（.cbar + .fld：高 34 / 圆角 13 / 玻璃） ---------- */
+    /* ---------- 输入条（.cbar/.fld ×k：框高 34→46 / 圆角 13→19 / 字 12.5→17） ---------- */
     private var inputBar: some View {
-        HStack(spacing: 9) {
-            Button { tip("语音消息下一轮做") } label: {
-                Image(systemName: "mic")
-                    .font(.system(size: 20, weight: .light))
-                    .foregroundColor(Color(red: 0.60, green: 0.64, blue: 0.69))
-            }
-            .buttonStyle(PressStyle(scale: 0.88))
-
-            ZStack(alignment: .leading) {
-                if draft.isEmpty {
-                    Text("输入消息")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color(red: 0.62, green: 0.65, blue: 0.70))
+        VStack(spacing: 0) {
+            if let q = quoting {
+                HStack(spacing: 10) {
+                    Rectangle().fill(T.blue).frame(width: 3)
+                        .clipShape(Capsule())
+                    Text("引用 " + (q.name.isEmpty ? "对方" : q.name) + "：" + q.text)
+                        .font(.system(size: 15)).foregroundColor(T.sec2).lineLimit(1)
+                    Spacer(minLength: 0)
+                    Button { H.tap(); quoting = nil } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 18)).foregroundColor(T.ter2)
+                    }
+                    .buttonStyle(.plain)
                 }
-                TextField("", text: $draft, axis: .vertical)
-                    .font(.system(size: 12.5))
-                    .lineLimit(1...4)
-                    .foregroundColor(T.ink)
-                    .tint(T.blue)
-                    .disableAutocorrection(true)
+                .frame(height: 40)
+                .padding(.horizontal, 14)
+                .background(Color.white.opacity(0.5))
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            .padding(.horizontal, 12).frame(minHeight: 34)
-            .background(
-                ZStack {
-                    Rectangle().fill(.ultraThinMaterial)
-                    Rectangle().fill(Color.white.opacity(0.78))
-                }
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .stroke(Color.white.opacity(0.70), lineWidth: 0.5))
-
-            PhotosPicker(selection: $pick, matching: .images) {
-                Image(systemName: sending ? "hourglass" : "photo.on.rectangle")
-                    .font(.system(size: 20, weight: .light))
-                    .foregroundColor(Color(red: 0.60, green: 0.64, blue: 0.69))
-            }
-
-            if trimmed.isEmpty {
-                Button { tip("表情/更多面板下一轮做") } label: {
-                    Image(systemName: "plus.circle")
-                        .font(.system(size: 20, weight: .light))
+            HStack(spacing: 13) {
+                Button { tip("语音消息下一轮做") } label: {
+                    Image(systemName: "mic")
+                        .font(.system(size: 27, weight: .light))
                         .foregroundColor(Color(red: 0.60, green: 0.64, blue: 0.69))
                 }
                 .buttonStyle(PressStyle(scale: 0.88))
-                .transition(.scale.combined(with: .opacity))
-            } else {
-                Button { sendNow() } label: {
-                    Text("发送")
-                        .font(.system(size: 12.5, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 14).frame(height: 30)
-                        .background(T.gradBlue)
-                        .clipShape(Capsule())
-                        .shadow(color: T.blue.opacity(0.30), radius: 6, y: 3)
+
+                ZStack(alignment: .leading) {
+                    if draft.isEmpty {
+                        Text("输入消息")
+                            .font(.system(size: 17))
+                            .foregroundColor(Color(red: 0.62, green: 0.65, blue: 0.70))
+                    }
+                    TextField("", text: $draft, axis: .vertical)
+                        .font(.system(size: 17))
+                        .lineLimit(1...4)
+                        .foregroundColor(T.ink)
+                        .tint(T.blue)
+                        .disableAutocorrection(true)
                 }
-                .buttonStyle(PressStyle(scale: 0.92))
-                .transition(.scale.combined(with: .opacity))
+                .padding(.horizontal, 16).frame(minHeight: 46)
+                .background(
+                    ZStack {
+                        Rectangle().fill(.ultraThinMaterial)
+                        Rectangle().fill(Color.white.opacity(0.78))
+                    }
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 19, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 19, style: .continuous)
+                    .stroke(Color.white.opacity(0.70), lineWidth: 0.5))
+
+                PhotosPicker(selection: $pick, matching: .images) {
+                    Image(systemName: sending ? "hourglass" : "photo.on.rectangle")
+                        .font(.system(size: 27, weight: .light))
+                        .foregroundColor(Color(red: 0.60, green: 0.64, blue: 0.69))
+                }
+
+                if trimmed.isEmpty {
+                    Button { tip("表情/更多面板下一轮做") } label: {
+                        Image(systemName: "plus.circle")
+                            .font(.system(size: 27, weight: .light))
+                            .foregroundColor(Color(red: 0.60, green: 0.64, blue: 0.69))
+                    }
+                    .buttonStyle(PressStyle(scale: 0.88))
+                    .transition(.scale.combined(with: .opacity))
+                } else {
+                    Button { sendNow() } label: {
+                        Text("发送")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 18).frame(height: 40)
+                            .background(T.gradBlue)
+                            .clipShape(Capsule())
+                            .shadow(color: T.blue.opacity(0.30), radius: 6, y: 3)
+                    }
+                    .buttonStyle(PressStyle(scale: 0.92))
+                    .transition(.scale.combined(with: .opacity))
+                }
             }
+            .padding(.horizontal, 14 * T.k).padding(.top, 12).padding(.bottom, 12)
         }
-        .padding(.horizontal, 14).padding(.top, 9).padding(.bottom, 10)
         .background(
             ZStack {
                 Rectangle().fill(.ultraThinMaterial)
@@ -570,8 +593,9 @@ struct ChatScreen: View {
         let t = trimmed
         guard !t.isEmpty else { return }
         H.tap(.medium)
-        store.send(to: cid, text: t)
+        store.send(to: cid, text: t, quote: quoting)
         draft = ""
+        quoting = nil
     }
 
     private func tip(_ s: String) {
@@ -582,7 +606,111 @@ struct ChatScreen: View {
         }
     }
 
-    /* ---------- 看图（点开大图；往下拖关掉） ---------- */
+    /* ---------- 长按消息：照效果图 14，白卡片 + 压暗背景（不用系统那个"把气泡顶出来"的） ---------- */
+    @ViewBuilder private func menuLayer(_ m: Msg) -> some View {
+        let mine = m.from == store.meUserId
+        let canRecall = mine && !m.recalled
+            && Date().timeIntervalSince1970 * 1000 - m.ts < 10 * 60 * 1000
+        ZStack {
+            Color.black.opacity(0.26).ignoresSafeArea()
+                .onTapGesture { withAnimation(.easeOut(duration: 0.16)) { menuFor = nil } }
+            VStack(spacing: 0) {
+                menuBtn("引用", "quote.bubble") {
+                    quoting = Quote(id: m.id, from: m.from,
+                                    name: mine ? "我" : (m.from.isEmpty ? peer : peer),
+                                    text: String(m.text.prefix(200)))
+                    menuFor = nil
+                }
+                menuBtn("复制", "doc.on.doc") {
+                    UIPasteboard.general.string = m.text
+                    H.ok(); menuFor = nil
+                }
+                menuBtn("转发", "arrowshape.turn.up.right") {
+                    forwardMsg = m; menuFor = nil
+                }
+                if canRecall {
+                    menuBtn("撤回", "arrow.uturn.backward", danger: true) {
+                        store.recall(m.id); H.warn(); menuFor = nil
+                    }
+                }
+            }
+            .frame(width: 232)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .shadow(color: Color(red: 0.05, green: 0.1, blue: 0.2).opacity(0.22), radius: 26, y: 12)
+        }
+        .transition(.opacity)
+    }
+
+    private func menuBtn(_ title: String, _ icon: String, danger: Bool = false, _ run: @escaping () -> Void) -> some View {
+        Button {
+            H.tap()
+            run()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: icon).font(.system(size: 18))
+                    .foregroundColor(danger ? T.red : T.sec2).frame(width: 24)
+                Text(title).font(.system(size: 18)).foregroundColor(danger ? T.red : T.ink)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 20).frame(height: 58)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressStyle(scale: 0.97))
+    }
+
+    /* ---------- 转发选人（照效果图 18 的意思，先做成一个列表） ---------- */
+    private var forwardLayer: some View {
+        ZStack(alignment: .bottom) {
+            Color.black.opacity(0.28).ignoresSafeArea()
+                .onTapGesture { withAnimation(.easeOut(duration: 0.18)) { forwardMsg = nil } }
+            VStack(spacing: 0) {
+                Text("转发到…").font(.system(size: 20, weight: .semibold)).foregroundColor(T.ink)
+                    .padding(.top, 22).padding(.bottom, 12)
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(store.convs) { c in
+                            Button {
+                                if let m = forwardMsg {
+                                    store.send(to: c.id, text: m.text)
+                                    H.ok()
+                                }
+                                withAnimation(.easeOut(duration: 0.18)) { forwardMsg = nil }
+                                tip("已转发给 " + c.name)
+                            } label: {
+                                HStack(spacing: 14) {
+                                    Ava(name: c.name, size: 48, online: nil,
+                                        img: store.avatarId(c.id, isGroup: c.isGroup))
+                                    Text(c.name).font(.system(size: 18)).foregroundColor(T.ink)
+                                    Spacer()
+                                    Chev()
+                                }
+                                .padding(.horizontal, 20).frame(height: 66)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(PressStyle(scale: 0.98))
+                        }
+                        if store.convs.isEmpty {
+                            Text("还没有可以转发的会话").font(.system(size: 17)).foregroundColor(T.sec2)
+                                .padding(.vertical, 24)
+                        }
+                    }
+                }
+                .frame(maxHeight: 420)
+                Button { withAnimation(.easeOut(duration: 0.18)) { forwardMsg = nil } } label: {
+                    Text("取消").font(.system(size: 18)).foregroundColor(T.sec2)
+                        .frame(maxWidth: .infinity).frame(height: 60)
+                }
+                .buttonStyle(.plain)
+            }
+            .background(Color(red: 0.98, green: 0.99, blue: 1.0))
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .padding(.horizontal, 12).padding(.bottom, 12)
+        }
+        .transition(.opacity)
+    }
+
+    /* ---------- 看图 ---------- */
     @ViewBuilder private func viewerLayer(_ v: Msg) -> some View {
         if let fid = v.fileId, let u = store.fileURL(fid) {
             ZStack {
@@ -612,15 +740,15 @@ struct ChatScreen: View {
                             withAnimation(.easeOut(duration: 0.18)) { viewer = nil }
                         } label: {
                             Image(systemName: "xmark")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(.white)
-                                .frame(width: 34, height: 34)
+                                .frame(width: 44, height: 44)
                                 .background(Color.white.opacity(0.16))
                                 .clipShape(Circle())
                         }
                         .buttonStyle(PressStyle(scale: 0.9))
                     }
-                    .padding(.horizontal, 16).padding(.top, 6)
+                    .padding(.horizontal, 18).padding(.top, 8)
                     Spacer()
                 }
             }
@@ -630,11 +758,11 @@ struct ChatScreen: View {
 
     private var toastLayer: some View {
         Text(tipText)
-            .font(.system(size: 12))
+            .font(.system(size: 17))
             .foregroundColor(.white)
-            .padding(.horizontal, 14).padding(.vertical, 9)
+            .padding(.horizontal, 18).padding(.vertical, 12)
             .background(Color.black.opacity(0.72))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .transition(.opacity.combined(with: .scale(scale: 0.94)))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -659,7 +787,7 @@ struct ChatScreen: View {
     }
 }
 
-/// 气泡（v3 的 .b：max-width 186 / padding 9-12 / 圆角 18 / 12.5px / 行高 1.45）
+/// 气泡（.b ×k：max-width 186→265 / padding 9-12→13-17 / 圆角 18→24 / 12.5→18）
 private struct Bubble: View {
     let m: Msg
     let mine: Bool
@@ -667,31 +795,27 @@ private struct Bubble: View {
     let peerAv: String
     let isGroup: Bool
     var onPic: (Msg) -> Void
+    var onMenu: (Msg) -> Void
     @EnvironmentObject var store: Store
-
-    private var canRecall: Bool {
-        mine && !m.recalled
-            && Date().timeIntervalSince1970 * 1000 - m.ts < 10 * 60 * 1000
-    }
 
     var body: some View {
         VStack(alignment: mine ? .trailing : .leading, spacing: 0) {
             if !mine && isGroup {
                 Text(peer)
-                    .font(.system(size: 10.5)).foregroundColor(T.sec2)
-                    .padding(.leading, 32).padding(.bottom, 4)
+                    .font(.system(size: 15)).foregroundColor(T.sec2)
+                    .padding(.leading, 46).padding(.bottom, 6)
             }
-            HStack(alignment: .top, spacing: 8) {
-                if mine { Spacer(minLength: 44) }
-                if !mine { Ava(name: peer, size: 24, img: peerAv) }
+            HStack(alignment: .top, spacing: 12) {
+                if mine { Spacer(minLength: 60) }
+                if !mine { Ava(name: peer, size: 34, img: peerAv) }
                 bubble
-                if !mine { Spacer(minLength: 44) }
+                if !mine { Spacer(minLength: 60) }
             }
             if mine && !m.recalled {
                 Text(m.read > 0 ? "已读" : "已送达")
-                    .font(.system(size: 9.5))
+                    .font(.system(size: 13))
                     .foregroundColor(m.read > 0 ? T.blue.opacity(0.75) : T.ter2)
-                    .padding(.top, 4).padding(.trailing, 2)
+                    .padding(.top, 6).padding(.trailing, 3)
             }
         }
     }
@@ -699,26 +823,43 @@ private struct Bubble: View {
     @ViewBuilder private var bubble: some View {
         if m.kind == "image", let fid = m.fileId, let u = store.fileURL(fid) {
             NetImg(url: u)
-                .frame(width: 132, height: 132)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .shadow(color: Color(red: 0.063, green: 0.125, blue: 0.25).opacity(0.10), radius: 5, y: 2)
-                .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .frame(width: 192, height: 192)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .shadow(color: Color(red: 0.063, green: 0.125, blue: 0.25).opacity(0.10), radius: 6, y: 3)
+                .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 .onTapGesture { H.tap(); onPic(m) }
-                .contextMenu { menu }
+                .onLongPressGesture(minimumDuration: 0.32) { H.tap(.medium); onMenu(m) }
         } else {
-            Text(m.recalled ? "撤回了一条消息" : (m.text.isEmpty ? "[\(m.kind)]" : m.text))
-                .font(.system(size: 12.5))
-                .lineSpacing(2)
-                .fixedSize(horizontal: false, vertical: true)
-                .foregroundColor(m.recalled ? T.sec2 : (mine ? Color.white : T.ink))
-                .frame(maxWidth: 186, alignment: .leading)
-                .padding(.horizontal, 12).padding(.vertical, 9)
-                .background(bubbleBg)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .shadow(color: mine ? T.blue.opacity(0.30) : Color(red: 0.063, green: 0.125, blue: 0.25).opacity(0.06),
-                        radius: mine ? 8 : 5, y: mine ? 4 : 2)
-                .opacity(m.recalled ? 0.75 : 1)
-                .contextMenu { menu }
+            VStack(alignment: .leading, spacing: 6) {
+                if let q = m.quote, !q.text.isEmpty {
+                    HStack(spacing: 8) {
+                        Rectangle()
+                            .fill(mine ? Color.white.opacity(0.5) : T.blue.opacity(0.35))
+                            .frame(width: 2.5)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(q.name.isEmpty ? "对方" : q.name)
+                                .font(.system(size: 14, weight: .semibold))
+                            Text(q.text).font(.system(size: 15)).lineLimit(2)
+                        }
+                        .foregroundColor(mine ? Color.white.opacity(0.85) : T.sec2)
+                    }
+                    .padding(.bottom, 2)
+                }
+                Text(m.recalled ? "撤回了一条消息" : (m.text.isEmpty ? "[\(m.kind)]" : m.text))
+                    .font(.system(size: 18))
+                    .lineSpacing(5)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundColor(m.recalled ? T.sec2 : (mine ? Color.white : T.ink))
+            }
+            .frame(maxWidth: 265, alignment: .leading)
+            .padding(.horizontal, 17).padding(.vertical, 13)
+            .background(bubbleBg)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .shadow(color: mine ? T.blue.opacity(0.30) : Color(red: 0.063, green: 0.125, blue: 0.25).opacity(0.06),
+                    radius: mine ? 9 : 6, y: mine ? 5 : 3)
+            .opacity(m.recalled ? 0.75 : 1)
+            .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .onLongPressGesture(minimumDuration: 0.32) { H.tap(.medium); onMenu(m) }
         }
     }
 
@@ -730,20 +871,9 @@ private struct Bubble: View {
             Rectangle().fill(Color.white.opacity(0.86))
         })
     }
-
-    @ViewBuilder private var menu: some View {
-        Button { UIPasteboard.general.string = m.text; H.ok() } label: {
-            Label("复制", systemImage: "doc.on.doc")
-        }
-        if canRecall {
-            Button(role: .destructive) { store.recall(m.id); H.warn() } label: {
-                Label("撤回", systemImage: "arrow.uturn.backward")
-            }
-        }
-    }
 }
 
-/* ==================== 09 通讯录（下一轮按同一套改） ==================== */
+/* ==================== 09 通讯录 ==================== */
 struct ContactsPage: View {
     @EnvironmentObject var store: Store
     @EnvironmentObject var session: Session
@@ -753,7 +883,8 @@ struct ContactsPage: View {
         VStack(spacing: 0) {
             TopTitle(text: "通讯录") {
                 NavigationLink(destination: AddFriendView().environmentObject(store).navigationBarHidden(false)) {
-                    Image(systemName: "plus.circle").font(.system(size: 22)).foregroundColor(T.blue)
+                    Image(systemName: "plus.circle")
+                        .font(.system(size: 22 * T.k)).foregroundColor(T.blue)
                 }
             }
             SearchBar(placeholder: "搜索联系人")
@@ -765,110 +896,172 @@ struct ContactsPage: View {
                                     title: "新的朋友",
                                     trailing: pendingCount > 0 ? "\(pendingCount) 条请求" : "")
                         }.buttonStyle(.plain)
-                        ForEach(store.groups) { g in
-                            NavigationLink(destination: ChatScreen(cid: g.id, isGroup: true)
-                                .environmentObject(store)) {
-                                IconRow(icon: "bubble.left.and.bubble.right.fill",
-                                        color: Color(red: 0.220, green: 0.780, blue: 0.349),
-                                        title: g.name, trailing: "\(g.members.count) 个")
-                            }.buttonStyle(.plain)
-                        }
+                        NavigationLink(destination: GroupListView().environmentObject(store).navigationBarHidden(false)) {
+                            IconRow(icon: "bubble.left.and.bubble.right.fill",
+                                    color: Color(red: 0.220, green: 0.780, blue: 0.349),
+                                    title: "群聊", trailing: "\(store.groups.count) 个")
+                        }.buttonStyle(.plain)
                     }
-                    .glassCard().padding(.horizontal, 14).padding(.bottom, 14)
+                    .glassCard().padding(.horizontal, 14 * T.k).padding(.bottom, 20)
 
                     HStack {
                         Text("好友 · \(store.friends.count)")
-                            .font(.system(size: 11)).foregroundColor(T.sec2)
+                            .font(.system(size: 15)).foregroundColor(T.sec2)
                         Spacer()
                     }
-                    .padding(.horizontal, 20).padding(.bottom, 6)
+                    .padding(.horizontal, 30).padding(.bottom, 10)
 
                     VStack(spacing: 0) {
                         ForEach(store.friends) { f in
                             NavigationLink(destination: FriendProfileView(pid: f.id)
                                 .environmentObject(store).navigationBarHidden(false)) {
-                                HStack(spacing: 11) {
-                                    Ava(name: f.display, size: 40, online: f.online, img: f.avatar)
-                                    Text(f.display).font(.system(size: 13.5)).foregroundColor(T.ink)
+                                HStack(spacing: 16) {
+                                    Ava(name: f.display, size: 56, online: f.online, img: f.avatar)
+                                    Text(f.display).font(.system(size: 18)).foregroundColor(T.ink)
                                     Spacer()
                                 }
-                                .padding(.horizontal, 16).frame(height: 54)
+                                .padding(.horizontal, 20).frame(height: 76)
                                 .contentShape(Rectangle())
                             }.buttonStyle(.plain)
                         }
                         if store.friends.isEmpty {
-                            Text("还没有好友").font(.system(size: 12.5)).foregroundColor(T.sec2)
-                                .padding(.vertical, 14)
+                            Text("还没有好友").font(.system(size: 18)).foregroundColor(T.sec2)
+                                .padding(.vertical, 20)
                         }
                     }
-                    .glassCard().padding(.horizontal, 14)
+                    .glassCard().padding(.horizontal, 14 * T.k)
                 }
-                .padding(.bottom, 16)
+                .padding(.bottom, 20)
             }
         }
     }
 }
 
-/// 通讯录那种「小圆角图标 + 标题 + 右边小字」的行
+/// 群聊列表（照效果图 31 的意思：全员群 + 我进的群）
+struct GroupListView: View {
+    @EnvironmentObject var store: Store
+    @Environment(\.presentationMode) private var pm
+    var body: some View {
+        ZStack(alignment: .top) {
+            AppBg()
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    Button { H.tap(); pm.wrappedValue.dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 22, weight: .semibold)).foregroundColor(T.blue)
+                            .frame(width: 26, height: 40, alignment: .leading)
+                    }
+                    .buttonStyle(PressStyle(scale: 0.85))
+                    Text("群聊").font(.system(size: 20, weight: .semibold)).foregroundColor(T.ink)
+                    Spacer()
+                }
+                .padding(.horizontal, 18).frame(height: 58)
+
+                ScrollView {
+                    VStack(spacing: 0) {
+                        if store.allIn {
+                            NavigationLink(destination: ChatScreen(cid: "all", isGroup: true).environmentObject(store)) {
+                                HStack(spacing: 16) {
+                                    Ava(name: "全员群", size: 56)
+                                    Text("全员群").font(.system(size: 18)).foregroundColor(T.ink)
+                                    Spacer()
+                                    Chev()
+                                }
+                                .padding(.horizontal, 20).frame(height: 76)
+                                .contentShape(Rectangle())
+                            }.buttonStyle(.plain)
+                        }
+                        ForEach(store.groups) { g in
+                            NavigationLink(destination: ChatScreen(cid: g.id, isGroup: true).environmentObject(store)) {
+                                HStack(spacing: 16) {
+                                    Ava(name: g.name, size: 56)
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(g.name).font(.system(size: 18)).foregroundColor(T.ink)
+                                        Text("\(g.members.count) 人").font(.system(size: 15)).foregroundColor(T.sec2)
+                                    }
+                                    Spacer()
+                                    Chev()
+                                }
+                                .padding(.horizontal, 20).frame(height: 76)
+                                .contentShape(Rectangle())
+                            }.buttonStyle(.plain)
+                        }
+                        if !store.allIn && store.groups.isEmpty {
+                            Text("还没进任何群").font(.system(size: 18)).foregroundColor(T.sec2)
+                                .padding(.top, 60)
+                        }
+                    }
+                    .glassCard().padding(.horizontal, 14 * T.k).padding(.top, 8)
+                }
+            }
+        }
+        .navigationBarHidden(true)
+    }
+}
+
+/// 通讯录那种「小圆角图标 + 标题 + 右边小字」的行（×k：图标 30 / 字 18 / 行高 68）
 struct IconRow: View {
     let icon: String
     let color: Color
     let title: String
     var trailing: String = ""
     var sub: String = ""
-    var chev = true                       // 设计稿里这类行右边都有一颗 ›
+    var chev = true
     var body: some View {
-        HStack(spacing: 11) {
+        HStack(spacing: 16) {
             ZStack {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(LinearGradient(colors: [color.opacity(0.88), color], startPoint: .top, endPoint: .bottom))
-                    .frame(width: 22, height: 22)
-                Image(systemName: icon).font(.system(size: 11, weight: .semibold)).foregroundColor(.white)
+                    .frame(width: 30, height: 30)
+                Image(systemName: icon).font(.system(size: 15, weight: .semibold)).foregroundColor(.white)
             }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 13.5)).foregroundColor(T.ink)
-                if !sub.isEmpty { Text(sub).font(.system(size: 10.5)).foregroundColor(T.sec2) }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.system(size: 18)).foregroundColor(T.ink)
+                if !sub.isEmpty { Text(sub).font(.system(size: 14)).foregroundColor(T.sec2) }
             }
             Spacer()
             if !trailing.isEmpty {
-                Text(trailing).font(.system(size: 11.5)).foregroundColor(T.sec2)
+                Text(trailing).font(.system(size: 15)).foregroundColor(T.sec2)
             }
             if chev { Chev() }
         }
-        .padding(.horizontal, 16).frame(height: 50)
+        .padding(.horizontal, 20).frame(height: 68)
         .contentShape(Rectangle())
     }
 }
 
-/// 设计稿里那颗 ›（#CFD7E0，12/600）
+/// 设计稿里那颗 ›（#CFD7E0）×k ≈ 17
 struct Chev: View {
     var body: some View {
         Image(systemName: "chevron.right")
-            .font(.system(size: 12, weight: .semibold))
+            .font(.system(size: 17, weight: .semibold))
             .foregroundColor(Color(red: 0.812, green: 0.843, blue: 0.878))
     }
 }
 
-/* ==================== 11 我（下一轮按同一套改） ==================== */
+/* ==================== 11 我 ==================== */
 struct MePage: View {
     @EnvironmentObject var store: Store
     @EnvironmentObject var session: Session
     private var nick: String { store.meName.isEmpty ? session.myName : store.meName }
+    /// BB鸡号：优先用服务器 WS 给的那份（store.meId），没有才退回登录时存的
+    private var myBbji: String { store.meId.isEmpty ? session.myId : store.meId }
     var body: some View {
         VStack(spacing: 0) {
             TopTitle("我")
             ScrollView {
                 VStack(spacing: 0) {
                     VStack(spacing: 0) {
-                        Ava(name: nick.isEmpty ? "我" : nick, size: 84, img: store.myAvatar)
+                        Ava(name: nick.isEmpty ? "我" : nick, size: 116, img: store.myAvatar)
                         Text(nick.isEmpty ? "—" : nick)
-                            .font(.system(size: 16, weight: .semibold)).foregroundColor(T.ink)
-                            .padding(.top, 11)
-                        Text("BB鸡号 \(session.myId)").font(.system(size: 11)).foregroundColor(T.sec2)
-                            .padding(.top, 4)
+                            .font(.system(size: 22, weight: .semibold)).foregroundColor(T.ink)
+                            .padding(.top, 16)
+                        Text("BB鸡号 \(myBbji.isEmpty ? "—" : myBbji)")
+                            .font(.system(size: 15)).foregroundColor(T.sec2)
+                            .padding(.top, 5)
                     }
-                    .frame(maxWidth: .infinity).padding(.vertical, 22)
-                    .glassCard().padding(.horizontal, 14).padding(.bottom, 14)
+                    .frame(maxWidth: .infinity).padding(.vertical, 30)
+                    .glassCard().padding(.horizontal, 14 * T.k).padding(.bottom, 20)
 
                     VStack(spacing: 0) {
                         NavigationLink(destination: MyProfileView().environmentObject(store)
@@ -879,39 +1072,27 @@ struct MePage: View {
                             IconRow(icon: "square.grid.2x2", color: Color(red: 0.98, green: 0.62, blue: 0.24),
                                     title: "设计稿（v5 · 61 屏）")
                         }.buttonStyle(.plain)
-                        HStack(spacing: 11) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                                    .fill(LinearGradient(colors: [Color(red: 0.68, green: 0.50, blue: 0.98),
-                                                                  Color(red: 0.55, green: 0.36, blue: 0.95)],
-                                                         startPoint: .top, endPoint: .bottom))
-                                    .frame(width: 22, height: 22)
-                                Image(systemName: "gearshape.fill").font(.system(size: 11)).foregroundColor(.white)
-                            }
-                            Text("连接状态").font(.system(size: 13.5)).foregroundColor(T.ink)
-                            Spacer()
-                            Text(store.connected ? "已连上服务器" : "重连中…")
-                                .font(.system(size: 11.5)).foregroundColor(store.connected ? T.green : T.sec2)
-                        }
-                        .padding(.horizontal, 16).frame(height: 50)
+                        IconRow(icon: "wifi", color: Color(red: 0.55, green: 0.36, blue: 0.95),
+                                title: "连接状态", trailing: store.connected ? "已连上服务器" : "重连中…",
+                                chev: false)
                     }
-                    .glassCard().padding(.horizontal, 14).padding(.bottom, 14)
+                    .glassCard().padding(.horizontal, 14 * T.k).padding(.bottom, 20)
 
                     VStack(spacing: 0) {
                         Button {
                             store.disconnect(); session.logout()
                         } label: {
-                            Text("退出登录").font(.system(size: 13.5)).foregroundColor(T.red)
-                                .frame(maxWidth: .infinity).frame(height: 50)
+                            Text("退出登录").font(.system(size: 18)).foregroundColor(T.red)
+                                .frame(maxWidth: .infinity).frame(height: 68)
                         }
                     }
-                    .glassCard().padding(.horizontal, 14)
+                    .glassCard().padding(.horizontal, 14 * T.k)
 
                     Text("版本 " + appVersionText())
-                        .font(.system(size: 10.5)).foregroundColor(T.ter2)
-                        .frame(maxWidth: .infinity).padding(.top, 14)
+                        .font(.system(size: 14)).foregroundColor(T.ter2)
+                        .frame(maxWidth: .infinity).padding(.top, 20)
                 }
-                .padding(.bottom, 16)
+                .padding(.bottom, 24)
             }
         }
     }

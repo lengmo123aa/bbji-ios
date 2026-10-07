@@ -38,6 +38,15 @@ struct Msg: Identifiable, Equatable {
     var recalled: Bool = false
     var read: Int = 0
     var fileId: String? = nil
+    var quote: Quote? = nil
+}
+
+/// 引用回复带的那一小段（服务端 /api 只留 id/from/name/text，最多 200 字）
+struct Quote: Equatable {
+    var id = ""
+    var from = ""
+    var name = ""
+    var text = ""
 }
 
 /// 好友申请（收进来的 reqs / 我发出去的 sent）
@@ -184,7 +193,8 @@ final class Store: ObservableObject {
         case "ack":
             if let cid = o["cid"] as? String, let id = o["id"] as? String, let ts = o["ts"] as? Double {
                 if let i = msgs.firstIndex(where: { $0.id == cid }) {
-                    msgs[i] = Msg(id: id, from: msgs[i].from, to: msgs[i].to, text: msgs[i].text, ts: ts, kind: msgs[i].kind)
+                    msgs[i] = Msg(id: id, from: msgs[i].from, to: msgs[i].to, text: msgs[i].text,
+                                  ts: ts, kind: msgs[i].kind, quote: msgs[i].quote)
                 }
             }
         case "recall":
@@ -265,16 +275,26 @@ final class Store: ObservableObject {
            自己乐观插的那条是纯字符串 —— 两种都收，否则聊天里的图片永远显示不出来。 */
         if let s = m["file"] as? String { msg.fileId = s }
         else if let o = m["file"] as? [String: Any] { msg.fileId = (o["id"] as? String) ?? (o["fileId"] as? String) }
+        /* 引用回复 */
+        if let q = m["quote"] as? [String: Any] {
+            msg.quote = Quote(id: (q["id"] as? String) ?? "", from: (q["from"] as? String) ?? "",
+                              name: (q["name"] as? String) ?? "", text: (q["text"] as? String) ?? "")
+        }
         return msg
     }
 
     /* ---------- 发消息 ---------- */
-    func send(to: String, text: String) {
+    func send(to: String, text: String, quote: Quote? = nil) {
         let s = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !s.isEmpty, !token.isEmpty else { return }
         let cid = "c" + String(Int(Date().timeIntervalSince1970 * 1000))
-        msgs.append(Msg(id: cid, from: meUserId, to: to, text: s, ts: Date().timeIntervalSince1970 * 1000))
-        raw(["t": "send", "to": to, "text": s, "cid": cid])
+        msgs.append(Msg(id: cid, from: meUserId, to: to, text: s,
+                        ts: Date().timeIntervalSince1970 * 1000, quote: quote))
+        var frame: [String: Any] = ["t": "send", "to": to, "text": s, "cid": cid]
+        if let q = quote {
+            frame["quote"] = ["id": q.id, "from": q.from, "name": q.name, "text": q.text]
+        }
+        raw(frame)
     }
 
     var meUserId = ""      // 服务端给的 userId（authed 里没有，用 people 找自己）

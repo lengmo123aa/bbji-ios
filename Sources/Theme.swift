@@ -8,6 +8,11 @@ import UIKit
      --sep rgba(60,60,67,.045) / 页面背景 168deg #E9F1FD→#F5F9FE→#F2EFFC + 两个柔光球
    ================================================================== */
 enum T {
+    /* ⚠️ 关键：效果图那套 HTML 是按 **270pt 宽**的画框画的（mobile-ui.html 里 .scr{width:270px}），
+       真机 iPhone 是 **393pt 宽** → 直接把效果图的 14px 名字搬到手机上就"小一圈、扁一圈"。
+       所有从效果图抄来的数值都要乘这个 k（393/270 ≈ 1.455）。以后加新页面也照这个来。 */
+    static let k: CGFloat = 393.0 / 270.0
+
     /* 文字 */
     static let ink = Color(red: 0.043, green: 0.051, blue: 0.071)      // #0B0D12
     static let ink2 = Color(red: 0.173, green: 0.196, blue: 0.235)     // #2C323C
@@ -30,7 +35,7 @@ enum T {
     static let sepLine = sep
     static let pinBg = Color(red: 0.416, green: 0.659, blue: 1.0).opacity(0.10)   // .li.pin
     static let rowSolid = Color(red: 0.976, green: 0.988, blue: 1.0)             // 左滑时行的底（盖住按钮用）
-    static let cardRadius: CGFloat = 24
+    static let cardRadius: CGFloat = 34
 
     /* 渐变（v3：按钮/气泡/角标都换成了浅蓝→蓝、浅红→红） */
     static let gradBlue = LinearGradient(
@@ -284,36 +289,36 @@ struct TopTitle<Trailing: View>: View {
     @ViewBuilder var trailing: () -> Trailing
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            Text(text).font(.system(size: 25, weight: .bold))
-                .kerning(-0.9).foregroundColor(T.ink)
+            Text(text).font(.system(size: 25 * T.k, weight: .bold))
+                .kerning(-1.2).foregroundColor(T.ink)
             Spacer(minLength: 0)
             trailing()
         }
-        .padding(.horizontal, 18).padding(.top, 2).padding(.bottom, 12)
+        .padding(.horizontal, 24).padding(.top, 2).padding(.bottom, 16)
     }
 }
 extension TopTitle where Trailing == EmptyView {
     init(_ text: String) { self.init(text: text) { EmptyView() } }
 }
 
-/// 搜索框（v3 的 .srch：高 34 / 圆角 15 / 玻璃 + 白 58% / 12px / #98A1AE）
+/// 搜索框（v3 的 .srch：高 34 / 圆角 15 / 玻璃 + 白 58% / 12px —— 全部 ×k）
 struct SearchBar: View {
     let placeholder: String
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").font(.system(size: 13, weight: .medium))
+        HStack(spacing: 9) {
+            Image(systemName: "magnifyingglass").font(.system(size: 13 * T.k, weight: .medium))
                 .foregroundColor(Color(red: 0.60, green: 0.63, blue: 0.68))
-            Text(placeholder).font(.system(size: 12)).foregroundColor(T.hint)
+            Text(placeholder).font(.system(size: 12 * T.k)).foregroundColor(T.hint)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 10).frame(height: 34)
+        .padding(.horizontal, 15).frame(height: 34 * T.k)
         .background(.ultraThinMaterial)
         .background(Color.white.opacity(0.58))
-        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
             .stroke(Color.white.opacity(0.60), lineWidth: 0.5))
         .shadow(color: Color(red: 0.063, green: 0.125, blue: 0.25).opacity(0.04), radius: 4, y: 2)
-        .padding(.horizontal, 14).padding(.bottom, 10)
+        .padding(.horizontal, 20).padding(.bottom, 14)
     }
 }
 
@@ -322,10 +327,10 @@ struct BadgeNum: View {
     let n: Int
     var body: some View {
         Text(n > 99 ? "99+" : "\(n)")
-            .font(.system(size: 11, weight: .semibold)).foregroundColor(.white)
-            .padding(.horizontal, 5).frame(minWidth: 18, minHeight: 18)
+            .font(.system(size: 15, weight: .semibold)).foregroundColor(.white)
+            .padding(.horizontal, 7).frame(minWidth: 26, minHeight: 26)
             .background(T.gradRed)
-            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
             .shadow(color: Color(red: 0.941, green: 0.275, blue: 0.227).opacity(0.35), radius: 1.5, y: 1)
     }
 }
@@ -350,9 +355,9 @@ struct DZTabBar: View {
                     } label: {
                         VStack(spacing: 4) {
                             Image(systemName: sel == i ? items[i].1 : items[i].0)
-                                .font(.system(size: 19, weight: .regular))
+                                .font(.system(size: 24, weight: .regular))
                                 .scaleEffect(sel == i ? 1.0 : 0.94)
-                            Text(items[i].2).font(.system(size: 9, weight: sel == i ? .medium : .regular))
+                            Text(items[i].2).font(.system(size: 11.5, weight: sel == i ? .medium : .regular))
                         }
                         .foregroundColor(sel == i ? T.blue : T.tabIdle)
                         .frame(maxWidth: .infinity)
@@ -361,7 +366,7 @@ struct DZTabBar: View {
                     .buttonStyle(PressStyle(scale: 0.92))
                 }
             }
-            .padding(.top, 8).frame(height: 62, alignment: .top)
+            .padding(.top, 10).frame(height: 68, alignment: .top)
         }
         .background(
             ZStack {

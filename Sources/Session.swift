@@ -53,12 +53,16 @@ final class Session: ObservableObject {
             }
             token = (r["token"] as? String) ?? ""
             let me = (r["me"] as? [String: Any]) ?? [:]
-            /* 服务器有时候不把 name 放进来（或者旧缓存里没有）——先按账号显示，
-               等 WS 的 authed / people 回来会用真名覆盖（Store.meName），别一直显示账号。 */
-            let nm = (me["name"] as? String) ?? ""
-            myName = nm.isEmpty ? account : nm
-            if nm.isEmpty { myName = UserDefaults.standard.string(forKey: "bbji_nick") ?? account }
-            myId = (me["bbjiId"] as? String) ?? (me["account"] as? String) ?? account
+            /* ⚠️ 2026-10-07 修的真 bug：/api/login 的返回体里**没有 me 这一层**，字段是平铺的
+               （ok / token / userId / name / account / email / bbjiId / avatar）。
+               以前只读 me[...] → 全都读不到，就退成"用户手打的那个账号"——
+               用户用邮箱登录时，「我」页和资料页的 BB鸡号就变成了邮箱，跟电脑端对不上。
+               现在平铺字段优先，同时兼容 me 那一层。 */
+            let nm = (r["name"] as? String) ?? (me["name"] as? String) ?? ""
+            myName = nm.isEmpty ? (UserDefaults.standard.string(forKey: "bbji_nick") ?? account) : nm
+            myId = (r["bbjiId"] as? String) ?? (me["bbjiId"] as? String)
+                ?? (r["account"] as? String) ?? (me["account"] as? String) ?? account
+            if let em = (r["email"] as? String), !em.isEmpty { UserDefaults.standard.set(em, forKey: "bbji_email") }
             if !nm.isEmpty { UserDefaults.standard.set(nm, forKey: "bbji_nick") }
             UserDefaults.standard.set(token, forKey: Self.tokenKey)
             UserDefaults.standard.set(["name": myName, "bbjiId": myId], forKey: Self.meKey)
