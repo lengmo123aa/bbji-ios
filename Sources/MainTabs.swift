@@ -11,7 +11,7 @@ struct MainTabs: View {
             ChatListView().environmentObject(store)
                 .tabItem { Label("消息", systemImage: "bubble.left.and.bubble.right.fill") }
                 .badge(store.convs.reduce(0) { $0 + $1.unread })
-            ContactsView().environmentObject(store)
+            ContactsView().environmentObject(store).environmentObject(session)
                 .tabItem { Label("通讯录", systemImage: "person.2.fill") }
             MeView().environmentObject(store).environmentObject(session)
                 .tabItem { Label("我", systemImage: "person.crop.circle.fill") }
@@ -27,6 +27,7 @@ struct Ava: View {
     let name: String
     var size: CGFloat = 40
     var online: Bool? = nil
+    var img: String = ""          // 有自定义头像就显示图（传 file id）
     private var hue: Double {
         var h = 0
         for u in name.unicodeScalars { h = (h &* 31 &+ Int(u.value)) % 360 }
@@ -39,8 +40,15 @@ struct Ava: View {
                                                       Color(hue: hue, saturation: 0.62, brightness: 0.84)],
                                              startPoint: .topLeading, endPoint: .bottomTrailing))
                 Text(String(name.prefix(1))).font(.system(size: size * 0.4, weight: .semibold)).foregroundColor(.white)
+                if !img.isEmpty, let u = URL(string: "https://bbji.xkmd.cn/api/file/\(img)") {
+                    AsyncImage(url: u) { ph in
+                        if let im = ph.image { im.resizable().scaledToFill() }
+                        else { Color.clear }
+                    }
+                }
             }
             .frame(width: size, height: size)
+            .clipShape(Circle())
             .saturation(online == false ? 0 : 1)
             .opacity(online == false ? 0.5 : 1)
             if online == true {
@@ -258,12 +266,32 @@ private struct Bubble: View {
 /* ==================== 09 通讯录 ==================== */
 struct ContactsView: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var session: Session
+    private var pendingCount: Int { store.reqs.filter { !$0.outgoing && $0.state == "pending" }.count }
     var body: some View {
         NavigationView {
             ZStack {
                 AppBg().ignoresSafeArea()
                 List {
                     Section {
+                        /* 10 新的朋友（有申请就带红点数字） */
+                        NavigationLink(destination: NewFriendsView().environmentObject(store)) {
+                            HStack(spacing: 10) {
+                                ZStack {
+                                    Circle().fill(LinearGradient(colors: [T.blueLight, T.blue],
+                                                                 startPoint: .top, endPoint: .bottom))
+                                        .frame(width: 34, height: 34)
+                                    Image(systemName: "person.badge.plus").font(.system(size: 15)).foregroundColor(.white)
+                                }
+                                Text("新的朋友").font(.system(size: 13.5))
+                                Spacer()
+                                if pendingCount > 0 {
+                                    Text("\(pendingCount)").font(.system(size: 11, weight: .semibold)).foregroundColor(.white)
+                                        .padding(.horizontal, 6).padding(.vertical, 2)
+                                        .background(Capsule().fill(T.red))
+                                }
+                            }
+                        }
                         /* 全员群 + 我建的/进的群，点进去就是群聊 */
                         if store.allIn {
                             NavigationLink(destination: ChatScreen(cid: "all", isGroup: true).environmentObject(store)) {
@@ -292,10 +320,12 @@ struct ContactsView: View {
                             Text("还没有好友").font(.system(size: 12.5)).foregroundColor(T.gray)
                         }
                         ForEach(store.friends) { f in
-                            HStack(spacing: 10) {
-                                Ava(name: f.display, size: 34, online: f.online)
-                                Text(f.display).font(.system(size: 13.5))
-                                Spacer()
+                            NavigationLink(destination: FriendProfileView(pid: f.id).environmentObject(store)) {
+                                HStack(spacing: 10) {
+                                    Ava(name: f.display, size: 34, online: f.online, img: f.avatar)
+                                    Text(f.display).font(.system(size: 13.5))
+                                    Spacer()
+                                }
                             }
                             .padding(.vertical, 2)
                         }
@@ -304,6 +334,13 @@ struct ContactsView: View {
                 .listStyle(.insetGrouped)
             }
             .navigationTitle("通讯录")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: AddFriendView().environmentObject(store)) {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
         }
     }
 }
@@ -327,6 +364,13 @@ struct MeView: View {
                         .frame(maxWidth: .infinity).padding(.vertical, 8)
                     }
                     Section {
+                        NavigationLink(destination: MyProfileView().environmentObject(store).environmentObject(session)) {
+                            HStack(spacing: 10) {
+                                Image(systemName: "person.text.rectangle").foregroundColor(T.blue)
+                                Text("我的资料")
+                                Spacer()
+                            }
+                        }
                         NavigationLink("设计稿（v5 · 61 屏）") { WebShell() }
                         HStack {
                             Text("连接状态")

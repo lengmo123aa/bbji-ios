@@ -16,6 +16,7 @@ struct Person: Identifiable, Equatable {
     var online: Bool = false
     var remark: String = ""
     var account: String = ""
+    var bbji: String = ""
     var avatar: String = ""
     var display: String { remark.isEmpty ? name : remark }
 }
@@ -39,6 +40,16 @@ struct Msg: Identifiable, Equatable {
     var fileId: String? = nil
 }
 
+/// 好友申请（收进来的 reqs / 我发出去的 sent）
+struct FriendReq: Identifiable {
+    let id: String
+    var userId: String
+    var msg: String
+    var ts: Double
+    var state: String     // pending / accepted / rejected
+    var outgoing: Bool
+}
+
 /// 会话（消息列表里的一行）
 struct Conv: Identifiable {
     let id: String            // 对方 id / 群 id
@@ -60,6 +71,9 @@ final class Store: ObservableObject {
     @Published var groups: [ChatGroup] = []
     @Published var allIn = false
     @Published var msgs: [Msg] = []
+    @Published var reqs: [FriendReq] = []
+    @Published var myAvatar = ""
+    @Published var myEmail = ""
     @Published var lastRead: [String: Double] = [:]
     @Published var pinned: [String] = []      // 置顶（本机存的，跟电脑端一样是本地状态）
     @Published var muted: [String] = []       // 免打扰
@@ -142,6 +156,8 @@ final class Store: ObservableObject {
             if let me = o["me"] as? [String: Any] {
                 meName = (me["name"] as? String) ?? ""
                 meId = (me["bbjiId"] as? String) ?? (me["account"] as? String) ?? ""
+                myAvatar = (me["avatar"] as? String) ?? ""
+                myEmail = (me["email"] as? String) ?? ""
             }
             raw(["t": "sync", "since": 0])
         case "auth_err":
@@ -183,6 +199,7 @@ final class Store: ObservableObject {
                                 online: (p["online"] as? Bool) ?? false,
                                 remark: (p["remark"] as? String) ?? "",
                                 account: (p["account"] as? String) ?? "",
+                                bbji: (p["bbjiId"] as? String) ?? "",
                                 avatar: (p["avatar"] as? String) ?? "")
         }
     }
@@ -196,6 +213,7 @@ final class Store: ObservableObject {
                                     online: (p["online"] as? Bool) ?? false,
                                     remark: (p["remark"] as? String) ?? "",
                                     account: (p["account"] as? String) ?? "",
+                                    bbji: (p["bbjiId"] as? String) ?? "",
                                     avatar: (p["avatar"] as? String) ?? "")
                 people[id] = person
                 return person
@@ -209,6 +227,25 @@ final class Store: ObservableObject {
             }
         }
         if let a = o["allIn"] as? Bool { allIn = a }
+        /* 好友申请：收进来的 + 我发出去的 */
+        var list: [FriendReq] = []
+        for r in (o["reqs"] as? [[String: Any]] ?? []) {
+            guard let from = r["from"] as? String else { continue }
+            list.append(FriendReq(id: (r["id"] as? String) ?? from, userId: from,
+                                  msg: (r["msg"] as? String) ?? "", ts: (r["ts"] as? Double) ?? 0,
+                                  state: (r["state"] as? String) ?? "pending", outgoing: false))
+        }
+        for r in (o["sent"] as? [[String: Any]] ?? []) {
+            guard let to = r["to"] as? String else { continue }
+            list.append(FriendReq(id: (r["id"] as? String) ?? to, userId: to,
+                                  msg: (r["msg"] as? String) ?? "", ts: (r["ts"] as? Double) ?? 0,
+                                  state: (r["state"] as? String) ?? "pending", outgoing: true))
+        }
+        reqs = list.sorted { $0.ts > $1.ts }
+        /* 头像/邮箱会随 people 更新，把自己那份也刷一下 */
+        if let mine = people[meUserId] {
+            if !mine.avatar.isEmpty { myAvatar = mine.avatar }
+        }
     }
 
     private func msgOf(_ m: [String: Any]) -> Msg? {
@@ -287,6 +324,68 @@ final class Store: ObservableObject {
     func recall(_ id: String) {
         raw(["t": "recall", "id": id])
         if let i = msgs.firstIndex(where: { $0.id == id }) { msgs[i].recalled = true }
+    }
+
+    /* ---------- 加好友 / 备注 / 删好友 ---------- */
+    func friendReq(to: String, msg: String) { raw(["t": "friend_req", "to": to, "msg": msg]) }
+    func friendAck(from: String, accept: Bool) {
+        raw(["t": accept ? "friend_accept" : "friend_reject", "from": from])
+    }
+    func setRemark(id: String, remark: String) { raw(["t": "friend_remark", "id": id, "remark": remark]) }
+    func delFriend(id: String) { raw(["t": "friend_del", "id": id]) }
+
+    /// 用账号 / BB鸡号在本地这份 people 里找（跟电脑端一个做法）
+    func findUser(_ q: String) -> Person? {
+        let low = q.trimmingCharacters(in: .whitespaces).lowercased()
+        if low.isEmpty { return nil }
+        if let p = people.values.first(where: {
+            $0.account.lowercased() == low || $0.bbji.lowercased() == low || $0.id.lowercased() == low
+        }) { return p }
+        return nil
+    }
+
+    /* ---------- 换头像：POST /api/avatar → 再写进 /api/profile ---------- */
+    func uploadAvatar(data: Data, name: String) async -> String {
+        guard let u = URL(string: "https://bbji.xkmd.cn/api/avatar") else { return "地址不对" }
+        var req = URLRequest(url: u)
+        req.httpMethod = "POST"
+        req.setValue(token, forHTTPHeaderField: "x-token")
+        req.setValue(name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "a.png",
+                     forHTTPHeaderField: "x-file-name")
+        req.setValue("application/octet-stream", forHTTPHeaderField: "content-type")
+        do {
+            let (d, _) = try await URLSession.shared.upload(for: req, from: data)
+            let o = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any]
+            guard (o?["ok"] as? Bool) == true, let av = o?["avatar"] as? String else {
+                return (o?["error"] as? String) ?? "传不上去"
+            }
+            let r = await postJSON("/api/profile", ["token": token, "avatar": av])
+            if (r["ok"] as? Bool) == true { myAvatar = (r["avatar"] as? String) ?? av; return "" }
+            return (r["error"] as? String) ?? "换不了"
+        } catch { return "传不上去：" + error.localizedDescription }
+    }
+
+    /// 改昵称（占位图不换）
+    func setName(_ name: String) async -> String {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        if n.isEmpty { return "名字不能空着" }
+        let r = await postJSON("/api/profile", ["token": token, "name": n])
+        if (r["ok"] as? Bool) == true {
+            meName = n
+            if var p = people[meUserId] { p.name = n; people[meUserId] = p }
+            return ""
+        }
+        return (r["error"] as? String) ?? "改不了"
+    }
+
+    private func postJSON(_ path: String, _ body: [String: Any]) async -> [String: Any] {
+        guard let u = URL(string: "https://bbji.xkmd.cn" + path) else { return [:] }
+        var req = URLRequest(url: u)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "content-type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        guard let (d, _) = try? await URLSession.shared.data(for: req) else { return [:] }
+        return ((try? JSONSerialization.jsonObject(with: d)) as? [String: Any]) ?? [:]
     }
 
     private func loadRead() {
