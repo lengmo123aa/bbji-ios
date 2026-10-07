@@ -359,6 +359,7 @@ struct IconRow: View {
 struct MePage: View {
     @EnvironmentObject var store: Store
     @EnvironmentObject var session: Session
+    private var nick: String { store.meName.isEmpty ? session.myName : store.meName }
     var body: some View {
         VStack(spacing: 0) {
             TopTitle("我")
@@ -366,8 +367,8 @@ struct MePage: View {
                 VStack(spacing: 0) {
                     /* 资料卡：头像在上、名字和号在下面居中（用户 2026-10-07 定的） */
                     VStack(spacing: 0) {
-                        Ava(name: session.myName.isEmpty ? "我" : session.myName, size: 84, img: store.myAvatar)
-                        Text(session.myName.isEmpty ? "—" : session.myName)
+                        Ava(name: nick.isEmpty ? "我" : nick, size: 84, img: store.myAvatar)
+                        Text(nick.isEmpty ? "—" : nick)
                             .font(.system(size: 16, weight: .semibold)).foregroundColor(T.ink)
                             .padding(.top, 11)
                         Text("BB鸡号 \(session.myId)").font(.system(size: 11)).foregroundColor(T.sec2)
@@ -418,5 +419,6 @@ struct MePage: View {
         }
     }
 }
+
 
 

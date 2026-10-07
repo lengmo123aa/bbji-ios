@@ -53,8 +53,13 @@ final class Session: ObservableObject {
             }
             token = (r["token"] as? String) ?? ""
             let me = (r["me"] as? [String: Any]) ?? [:]
-            myName = (me["name"] as? String) ?? account
+            /* 服务器有时候不把 name 放进来（或者旧缓存里没有）——先按账号显示，
+               等 WS 的 authed / people 回来会用真名覆盖（Store.meName），别一直显示账号。 */
+            let nm = (me["name"] as? String) ?? ""
+            myName = nm.isEmpty ? account : nm
+            if nm.isEmpty { myName = UserDefaults.standard.string(forKey: "bbji_nick") ?? account }
             myId = (me["bbjiId"] as? String) ?? (me["account"] as? String) ?? account
+            if !nm.isEmpty { UserDefaults.standard.set(nm, forKey: "bbji_nick") }
             UserDefaults.standard.set(token, forKey: Self.tokenKey)
             UserDefaults.standard.set(["name": myName, "bbjiId": myId], forKey: Self.meKey)
             loggedIn = true

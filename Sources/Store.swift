@@ -158,6 +158,7 @@ final class Store: ObservableObject {
                 meId = (me["bbjiId"] as? String) ?? (me["account"] as? String) ?? ""
                 myAvatar = (me["avatar"] as? String) ?? ""
                 myEmail = (me["email"] as? String) ?? ""
+                if !meName.isEmpty { UserDefaults.standard.set(meName, forKey: "bbji_nick") }
             }
             raw(["t": "sync", "since": 0])
         case "auth_err":
@@ -256,7 +257,10 @@ final class Store: ObservableObject {
                    kind: (m["kind"] as? String) ?? "text",
                    recalled: (m["recalled"] as? Bool) ?? false,
                    read: (m["read"] as? Int) ?? 0)
-        msg.fileId = m["file"] as? String
+        /* 服务端发下来的 file 是对象 {id,name,size,…}（电脑端写的是 m.file.id）；
+           自己乐观插的那条是纯字符串 —— 两种都收，否则聊天里的图片永远显示不出来。 */
+        if let s = m["file"] as? String { msg.fileId = s }
+        else if let o = m["file"] as? [String: Any] { msg.fileId = (o["id"] as? String) ?? (o["fileId"] as? String) }
         return msg
     }
 
