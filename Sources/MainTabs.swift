@@ -54,7 +54,7 @@ private struct MeTab: View {
                     }
                     .padding(.vertical, 4)
 
-                    NavigationLink("设计稿（M0 验证用）") { WebShell() }
+                    NavigationLink("设计稿（v5 · 61 屏）") { WebShell() }
                 }
                 Section {
                     Button("退出登录", role: .destructive) { session.logout() }

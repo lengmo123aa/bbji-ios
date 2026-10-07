@@ -41,13 +41,17 @@ jobs:
           ldid -S "$APP/BBji"
           mkdir -p Payload
           cp -R "$APP" Payload/
-          zip -qry BBji-iOS-0.0.1.ipa Payload
-          unzip -l BBji-iOS-0.0.1.ipa | head -20
-          shasum -a 256 BBji-iOS-0.0.1.ipa
+          zip -qry BBji-iOS-0.0.2.ipa Payload
+          echo "--- 图标 / 版本号自检 ---"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Info.plist" || true
+          ls "$APP" | grep -i "AppIcon\|Assets.car" || echo "（没有图标资源，说明没打进包）"
+          unzip -l BBji-iOS-0.0.2.ipa | head -20
+          shasum -a 256 BBji-iOS-0.0.2.ipa
 
       - name: 上传 ipa
         uses: actions/upload-artifact@v4
         with:
-          name: BBji-iOS-0.0.1-ipa
-          path: BBji-iOS-0.0.1.ipa
+          name: BBji-iOS-0.0.2-ipa
+          path: BBji-iOS-0.0.2.ipa
           retention-days: 30

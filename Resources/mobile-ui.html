@@ -63,6 +63,64 @@
   .av.m{width:30px;height:30px}
   .av.s{width:24px;height:24px}
   .av.xl{width:84px;height:84px}
+  /* ===== v6（用户 2026-10-07 要求）=====
+     ① 在线状态只用一个「头像右下角绿点」表示；不在线 = 头像变灰，名字后面不再写「在线」 */
+  .avw{position:relative;flex:none;display:block}
+  .avw .av{margin:0}
+  .avw .ondot{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;
+    background:linear-gradient(180deg,#5FD97E,#34C759);box-shadow:0 0 0 2px rgba(255,255,255,.95);display:block}
+  .av.off{filter:grayscale(1) contrast(.94);opacity:.55}
+  .fireico{font-size:11px;line-height:1;margin-left:2px}
+  /* ② 左滑：操作按钮就贴在那一行里、跟行一样高，是「行被推出去、按钮盖住」，不撑高、不影响下面的行 */
+  .swrow{position:relative;overflow:hidden}
+  .swrow .acts2{position:absolute;right:0;top:0;bottom:0;display:flex}
+  .swrow .acts2 span{width:56px;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:500}
+  .swrow .acts2 .p1{background:#C3CBD8}
+  .swrow .acts2 .p2{background:#F0913F}
+  .swrow .acts2 .p3{background:#FF3B30}
+  .swrow .li{position:relative;background:#fff;transition:none}
+  /* ===== v7（用户 2026-10-07 要求）=====
+     ① 加号面板换成"最开始那版/微信那种"简约风：浅灰条 + 白方块 + 单色细线图标 */
+  .ppanel{flex:none;background:#F2F4F8;border-top:1px solid #E7ECF3;padding:14px 10px 16px}
+  .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;text-align:center}
+  .pcell{font-size:10.5px;color:#7B8595;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .pico{width:46px;height:46px;border-radius:14px;background:#fff;display:grid;place-items:center;
+    color:#3C4658;box-shadow:0 4px 10px rgba(20,30,52,.07)}
+  .pico .ico{width:22px;height:22px;stroke-width:1.5}
+  /* ② 官方公告（消息列表里的一行 + 打开后的公告气泡） */
+  .oav{width:40px;height:40px;flex:none}
+  .ann .annt{font-size:12.5px;font-weight:600;margin-bottom:6px}
+  .ann .anb{font-size:12px;color:#5A6472;line-height:1.7}
+  .ann .anl{margin-top:8px;font-size:11.5px;color:var(--blue);font-weight:500}
+  .b.wide{max-width:214px}
+  /* ③ 消息页右上角「＋」点开的菜单 + 扫一扫 */
+  .pmenu{position:relative;z-index:30;margin:2px 14px 0 auto;width:170px;background:rgba(255,255,255,.98);
+    border-radius:14px;box-shadow:0 16px 40px rgba(16,32,64,.22);overflow:hidden}
+  .pmenu .row{font-size:12.5px;gap:9px;min-height:40px;color:var(--ink)}
+  .pmenu .row .ico{color:#4A8BF6}
+  /* 注意：`.scr > *` 那条规则会把子元素强制成 position:relative，所以这条必须写 `.scr > .scanwrap` 才压得住 */
+  .scr > .scanwrap{position:absolute;inset:0;background:#0E141C;display:flex;flex-direction:column;z-index:6}
+  .scanwrap .st{color:#fff}
+  .scanwrap .navbar .ctr{color:#fff}
+  .scanbody{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+  .scanbody .fr{width:188px;height:188px;border-radius:22px;position:relative;background:rgba(255,255,255,.05);
+    box-shadow:0 0 0 2000px rgba(6,10,16,.62)}
+  .scanbody .fr i{position:absolute;width:26px;height:26px;border:3px solid #fff;border-radius:5px}
+  .scanbody .fr .l1{left:-2px;top:-2px;border-right:0;border-bottom:0;border-radius:6px 0 0 0}
+  .scanbody .fr .l2{right:-2px;top:-2px;border-left:0;border-bottom:0;border-radius:0 6px 0 0}
+  .scanbody .fr .l3{left:-2px;bottom:-2px;border-right:0;border-top:0;border-radius:0 0 0 6px}
+  .scanbody .fr .l4{right:-2px;bottom:-2px;border-left:0;border-top:0;border-radius:0 0 6px 0}
+  .scanbody .fr .beam{position:absolute;left:12px;right:12px;top:50%;height:2px;border-radius:2px;
+    background:linear-gradient(90deg,rgba(74,168,255,0),#4AA8FF,rgba(74,168,255,0))}
+  .scanbody .hint{font-size:11.5px;color:rgba(255,255,255,.82);text-align:center;line-height:1.8;padding:0 30px}
+  .dlg2{position:absolute;left:16px;right:16px;bottom:56px;background:#fff;border-radius:16px;overflow:hidden;
+    box-shadow:0 20px 50px rgba(8,14,24,.4);z-index:20}
+  .dlg2 .t{padding:16px 18px 6px;font-size:13.5px;font-weight:600;text-align:center}
+  .dlg2 .m{padding:0 18px 15px;font-size:12px;color:#6A7480;line-height:1.75;text-align:center}
+  .dlg2 .m b{color:var(--ink)}
+  .dlg2 .r{display:flex;border-top:.5px solid var(--sep)}
+  .dlg2 .r span{flex:1;text-align:center;padding:13px 0;font-size:13px;color:var(--blue)}
+  .dlg2 .r span+span{border-left:.5px solid var(--sep);font-weight:600}
 
   /* ================= 搜索 ================= */
   .srch{margin:0 14px 10px;height:34px;border-radius:11px;background:var(--search);
@@ -218,6 +276,9 @@
   .splash{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 26px}
   .brand{display:flex;align-items:center;gap:10px;margin-top:76px}
   .brand b{font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-1px}
+  /* v5（用户要求）：01/02/03 的标识改成「图标在上、名字在图标下面」，图标也放大 */
+  .brandv{display:flex;flex-direction:column;align-items:center;gap:9px}
+  .brandv b{font-size:23px;font-weight:700;color:var(--ink);letter-spacing:-.6px}
   .tag{font-size:13px;color:#71798A;line-height:1.8;text-align:center;margin-top:14px;letter-spacing:.3px}
   .tag2{font-size:11px;color:#AEB6C1;margin-top:10px;letter-spacing:.4px}
   .glass{position:relative;width:238px;height:204px;margin:8px 0 0}
@@ -510,6 +571,12 @@ const I = {
   video2:'<path d="M3.4 8.4A2.6 2.6 0 0 1 6 5.8h7.4a2.6 2.6 0 0 1 2.6 2.6v7.2a2.6 2.6 0 0 1-2.6 2.6H6a2.6 2.6 0 0 1-2.6-2.6z"/><path d="M16 12l4.6-3v6l-4.6-3z"/>',
   folder:'<path d="M3.6 7.6A2.4 2.4 0 0 1 6 5.2h3.1l1.8 2.2H18a2.4 2.4 0 0 1 2.4 2.4v6.4A2.4 2.4 0 0 1 18 18.6H6a2.4 2.4 0 0 1-2.4-2.4z"/>',
   eye:'<path d="M2.6 12S6 6.6 12 6.6 21.4 12 21.4 12 18 17.4 12 17.4 2.6 12 2.6 12z"/><circle cx="12" cy="12" r="2.8"/>'
+  /* v7 新增（加号面板 / 扫一扫 用）：图片 / 相机 / 名片 / 喇叭 */
+  ,
+  image:'<rect x="3.6" y="4.8" width="16.8" height="14.4" rx="3"/><circle cx="9.2" cy="10" r="1.7"/><path d="M4.4 17.6l4.2-3.9 3.2 2.9 2.5-2.2 4.9 4.4"/>',
+  cam:'<path d="M3.6 9.4A2.8 2.8 0 0 1 6.4 6.6h1.3l1.2-2h6.2l1.2 2h1.3a2.8 2.8 0 0 1 2.8 2.8v7a2.8 2.8 0 0 1-2.8 2.8H6.4a2.8 2.8 0 0 1-2.8-2.8z"/><circle cx="12" cy="12.9" r="3.3"/>',
+  card:'<rect x="3.4" y="5.8" width="17.2" height="12.4" rx="2.6"/><circle cx="9.4" cy="11.2" r="1.9"/><path d="M6.4 15.6a3.4 3.4 0 0 1 6 0M15.4 11h3.2M15.4 14.2h2.2"/>',
+  mega:'<path d="M4.6 10.2v3.6a1.8 1.8 0 0 0 1.8 1.8h1.1l7.7 3.7V4.7L7.5 8.4H6.4a1.8 1.8 0 0 0-1.8 1.8z"/><path d="M17.8 9.4a3.6 3.6 0 0 1 0 5.2"/>'
 };
 const S = (id, cls) => `<svg class="ico ${cls||''}" viewBox="0 0 24 24">${I[id]}</svg>`;
 const status = () => `<div class="st"><span>9:41</span><span class="r">
@@ -544,6 +611,9 @@ const G = ['assets/ph_g1.jpg','assets/ph_g2.jpg','assets/ph_g3.jpg','assets/ph_g
   'assets/ph_g6.jpg','assets/ph_g7.jpg','assets/ph_g8.jpg','assets/ph_g9.jpg',
   'assets/ph_g10.jpg','assets/ph_g11.jpg','assets/ph_g12.jpg'];
 const im = (src,cls) => `<img class="av ${cls||'n'}" src="${src}" alt="">`;
+/* v6：头像 + 在线绿点（on=1 亮头像带绿点；on=0 灰头像）
+   用法 avon(头像, 尺寸类, 在线吗) */
+const avon = (src, cls, on) => `<span class="avw">${im(src, (cls || 'n') + (on ? '' : ' off'))}${on ? '<span class="ondot"></span>' : ''}</span>`;
 const wave = n => Array.from({length:n},(_,i)=>`<i style="height:${[6,11,15,8,13,17,9,14,7,16,12,8][i%12]}px"></i>`).join('');
 
 const tabs = on => `<div class="tab">
@@ -555,10 +625,10 @@ const tabs = on => `<div class="tab">
 const splash = () => wrap(`
   ${status()}
   <div class="splash">
-    <div class="brand">${logo(38)}<b>BB鸡</b></div>
+    <div class="brandv" style="margin-top:34px">${logo(70)}<b>BB鸡</b></div>
     <div class="tag">随时随地<br>与重要的人聊天</div>
     <div class="tag2">更简洁 · 更流畅 · 更懂你</div>
-    <div class="glass"><span class="o1"></span><span class="o2"></span><span class="o3"></span></div>
+    <div style="height:172px;display:grid;place-items:center"><div class="glass" style="transform:scale(.84);transform-origin:center"><span class="o1"></span><span class="o2"></span><span class="o3"></span></div></div>
     <div class="dots"><i class="on"></i><i></i><i></i></div>
     <div class="cta">开始使用</div>
     <div class="link">已有账号，去登录</div>
@@ -567,11 +637,11 @@ const splash = () => wrap(`
 /* ============ ② 消息 ============ */
 const rows = [
   {n:'象象', on:1, pin:1, p:'好的，收到！😊', t:'09:41', b:3, a:A.xiang},
-  {n:'测试群', p:'老王：今晚一起吃饭吧～', t:'09:32', b:12, a:A.test},
+  {n:'测试群', grp:1, p:'老王：今晚一起吃饭吧～', t:'09:32', b:12, a:A.test},
   {n:'星皓', mute:1, p:'这个方案不错，赞！', t:'09:28', d:1, a:A.xing},
   {n:'Alex', p:'[草稿] Sounds great!', t:'09:15', tick:1, a:A.alex},
-  {n:'产品讨论', fire:1, p:'我：已上传最新版本', t:'09:02', b:5, a:A.prod},
-  {n:'设计小组', p:'李明：这版配色我调好了，你看下', t:'昨天', b:2, a:A.design}
+  {n:'产品讨论', grp:1, fire:1, p:'我：已上传最新版本', t:'09:02', b:5, a:A.prod},
+  {n:'设计小组', grp:1, p:'李明：这版配色我调好了，你看下', t:'昨天', b:2, a:A.design}
 ];
 const messages = () => wrap(`
   ${status()}
@@ -579,9 +649,9 @@ const messages = () => wrap(`
   <div class="srch">${S('search','s')}搜索聊天、联系人、消息</div>
   <div class="plainlist">
     ${rows.map(r=>`<div class="li ${r.pin?'pin':''}">
-      ${im(r.a,'n')}
+      ${r.grp ? im(r.a,'n') : avon(r.a,'n',r.on)}
       <div class="tx">
-        <div class="nm">${r.n}${r.on?'<span class="chip">在线</span>':''}${r.fire?'<span class="chip fire">阅后即焚</span>':''}</div>
+        <div class="nm">${r.n}${r.fire?'<span class="fireico">🔥</span>':''}</div>
         <div class="pv">${r.p}</div>
       </div>
       <div class="rt">
@@ -599,8 +669,8 @@ const messages = () => wrap(`
 const chat = () => wrap(`
   ${status()}
   <div class="navbar">
-    <span class="back">${S('back')}</span>${im(A.xiang,'m')}
-    <div class="nt"><div class="n">象象</div><div class="s">在线</div></div>
+    <span class="back">${S('back')}</span>${avon(A.xiang,'m',1)}
+    <div class="nt"><div class="n">象象</div></div>
     <div class="rs">${S('phone')}${S('video')}${S('more')}</div>
   </div>
   <div class="chat">
@@ -726,12 +796,7 @@ const settings = () => wrap(`
   ${status()}
   <div class="navbar"><span class="back">${S('back')}</span><div class="ctr">设置</div>
     <span style="width:14px"></span></div>
-  <div class="grp">
-    <div class="row tall">${im(A.zhao,'m')}
-      <span><span style="font-size:14.5px;font-weight:600;color:var(--ink);letter-spacing:-.2px">赵飞</span><br>
-      <span style="font-size:11px;color:var(--sec)">ID: 12345678</span></span>
-      <span class="ch">${S('chev','s')}</span></div>
-  </div>
+  <!-- v6：设置页顶上那张"人名 + ID"的卡去掉了（上一页「我」里已经有了） -->
   <div class="grp">
     <div class="row ic"><span class="ic c1">${S('shield','s')}</span>账号与安全<span class="ch">${S('chev','s')}</span></div>
     <div class="row ic"><span class="ic c2">${S('lock','s')}</span>隐私与锁定<span class="v">1 分钟</span><span class="ch">${S('chev','s')}</span></div>
@@ -762,7 +827,7 @@ const ck = (on) => `<span class="ck ${on?'on':''}"></span>`;
 /* ---------- ① 登录 / 注册 / 找回 ---------- */
 const login = () => wrap(`${status()}
   <div class="splash" style="padding-top:26px">
-    <div class="brand">${logo(34)}<b>BB鸡</b></div>
+    <div class="brandv" style="margin-top:24px">${logo(62)}<b>BB鸡</b></div>
     <div class="tag" style="margin-top:4px;font-size:12.5px">登录后开始聊天</div>
     <div class="grp" style="width:100%;margin:22px 0 0">
       <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">邮箱</span><span style="font-size:12.5px">xiang@example.com</span></div>
@@ -776,7 +841,7 @@ const login = () => wrap(`${status()}
 
 const register = () => wrap(`${status()}
   <div class="splash" style="padding-top:22px">
-    <div class="brand">${logo(30)}<b style="font-size:22px">注册 BB鸡</b></div>
+    <div class="brandv" style="margin-top:22px">${logo(56)}<b style="font-size:21px">注册 BB鸡</b></div>
     <div class="grp" style="width:100%;margin:20px 0 0">
       <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">邮箱</span><span style="font-size:12.5px;color:#B4BECB">填邮箱</span></div>
       <div class="row tall"><span style="color:#8A93A0;width:42px;font-size:12px">验证码</span><span style="font-size:12.5px;color:#B4BECB">6 位数字</span>
@@ -820,21 +885,20 @@ const forgot = () => wrap(`${status()}
 const swipeAct = () => wrap(`${status()}
   <div class="ltitle"><h1>消息</h1><span class="r">${S('plusc','l')}</span></div>
   <div class="srch">${S('search','s')}搜索聊天、联系人、消息</div>
-  <div class="plainlist" style="position:relative">
-    <div class="li pin" style="padding-right:150px">
-      ${im(A.grpAll)}
-      <div class="tx"><div class="nm">测试群 <span class="chip grey">5 人</span></div>
-        <div class="pv">老王：今晚一起吃饭吧～</div></div>
-      <div class="rt"><span class="tm">09:32</span><span class="bdg">12</span></div>
+  <div class="plainlist">
+    <!-- v6：被左滑的那一行整体往左推出去（左边出屏就没了），三个按钮跟行一样高、直接盖在右边 -->
+    <div class="swrow">
+      <div class="acts2"><span class="p1">置顶</span><span class="p2">免打扰</span><span class="p3">删除</span></div>
+      <div class="li pin" style="transform:translateX(-168px)">
+        ${im(A.grpAll)}
+        <div class="tx"><div class="nm">测试群 <span class="chip grey">5 人</span></div>
+          <div class="pv">老王：今晚一起吃饭吧～</div></div>
+        <div class="rt"><span class="tm">09:32</span><span class="bdg">12</span></div>
+      </div>
     </div>
-    <div style="position:absolute;right:14px;top:0;height:56px;display:flex;gap:6px;align-items:center">
-      <span style="width:52px;height:44px;border-radius:12px;background:#C3CBD8;color:#fff;font-size:10.5px;display:grid;place-items:center">置顶</span>
-      <span style="width:52px;height:44px;border-radius:12px;background:#F0913F;color:#fff;font-size:10.5px;display:grid;place-items:center">免打扰</span>
-      <span style="width:52px;height:44px;border-radius:12px;background:#FF3B30;color:#fff;font-size:10.5px;display:grid;place-items:center">删除</span>
-    </div>
-    <div class="li">${im(A.xiang)}<div class="tx"><div class="nm">象象</div><div class="pv">好的，收到！</div></div>
+    <div class="li">${avon(A.xiang,'n',1)}<div class="tx"><div class="nm">象象</div><div class="pv">好的，收到！</div></div>
       <div class="rt"><span class="tm">09:41</span><span class="dot"></span></div></div>
-    <div class="li">${im(A.wang)}<div class="tx"><div class="nm">星皓</div><div class="pv">这个方案不错，赞！</div></div>
+    <div class="li">${avon(A.wang,'n',0)}<div class="tx"><div class="nm">星皓</div><div class="pv">这个方案不错，赞！</div></div>
       <div class="rt"><span class="tm">09:28</span></div></div>
   </div>
   ${tabs(0)}`);
@@ -852,7 +916,7 @@ const listMenu = () => wrap(`${status()}
       <div class="row">消息免打扰<span class="ch">${S('bellslash','s')}</span></div>
       <div class="row danger" style="color:#FF3B30;justify-content:flex-start">删除聊天<span class="ch" style="color:#FFB4AF">${S('chev','s')}</span></div>
     </div>
-    <div class="li">${im(A.wang)}<div class="tx"><div class="nm">星皓</div><div class="pv">这个方案不错，赞！</div></div></div>
+    <div class="li">${avon(A.wang,'n',0)}<div class="tx"><div class="nm">星皓</div><div class="pv">这个方案不错，赞！</div></div></div>
   </div>
   ${tabs(0)}`);
 
@@ -866,10 +930,10 @@ const contacts = () => wrap(`${status()}
   </div>
   <div class="ghead">A · 12 位好友</div>
   <div class="grp">
-    <div class="row tall">${im(A.alex,'m')}<span style="font-size:12.5px;font-weight:500">Alex</span><span class="v">在线</span></div>
+    <div class="row tall">${avon(A.alex,'m',1)}<span style="font-size:12.5px;font-weight:500">Alex</span></div>
     <div class="row tall">${im(A.design,'m')}<span style="font-size:12.5px;font-weight:500">设计小组</span></div>
     <div class="row tall">${im(A.prod,'m')}<span style="font-size:12.5px;font-weight:500">产品经理</span></div>
-    <div class="row tall">${im(A.liming,'m')}<span style="font-size:12.5px;font-weight:500">李明</span><span class="v">上次在线 1 小时前</span></div>
+    <div class="row tall">${avon(A.liming,'m',0)}<span style="font-size:12.5px;font-weight:500">李明</span></div>
   </div>
   ${tabs(1)}`);
 
@@ -900,10 +964,10 @@ const newFriends = () => wrap(`${status()}
 const me = () => wrap(`${status()}
   <div class="ltitle"><h1>我</h1></div>
   <div class="grp">
-    <div class="row tall" style="padding-top:14px;padding-bottom:14px">${im(A.xiang,'xl')}
-      <div><div style="font-size:16px;font-weight:600;letter-spacing:-.3px">象象</div>
-        <div style="font-size:11px;color:#8A93A0;margin-top:4px">BB鸡号 10086</div></div>
-      <span class="ch" style="margin-left:auto">${S('chev','s')}</span></div>
+    <div class="row tall" style="display:block;text-align:center;padding:18px 16px 16px">
+      <img class="av xl" src="${A.xiang}" alt="" style="margin:0 auto">
+      <div style="font-size:16px;font-weight:600;letter-spacing:-.3px;margin-top:11px">象象</div>
+      <div style="font-size:11px;color:#8A93A0;margin-top:4px">BB鸡号 10086</div></div>
   </div>
   <div class="grp">
     <div class="row ic"><span class="ic c4">${S('me','s')}</span>我的资料<span class="ch">${S('chev','s')}</span></div>
@@ -922,13 +986,12 @@ const plusPanel = () => wrap(`${status()}
     <div class="ln"><div><div class="b">今天天气真好呀 😄</div></div></div>
     <div class="ln me"><div><div class="b m">是啊！<br>周末一起去逛街吧？</div><div class="receipt blue">已读</div></div></div>
   </div>
-  <div class="grp" style="margin:0 10px 8px;border-radius:18px">
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;padding:16px 12px">
-      ${[['图片','c4','eye'],['拍摄','c3','video2'],['文件','c1','folder'],['位置','c5','pin'],
-         ['名片','c6','people'],['语音通话','c2','phone'],['视频通话','c8','video'],['群公告','c7','text']]
-        .map(x=>`<div style="display:flex;flex-direction:column;align-items:center;gap:7px">
-          <span class="ic ${x[1]}" style="width:44px;height:44px;border-radius:14px">${S(x[2],'')}</span>
-          <span style="font-size:10px;color:#7E8796">${x[0]}</span></div>`).join('')}
+  <!-- v7：加号面板照"最开始那版 / 微信那种简约风"重画（浅灰条 + 白方块 + 单色细线图标） -->
+  <div class="ppanel">
+    <div class="pgrid">
+      ${[['图片','image'],['拍摄','cam'],['文件','folder'],['位置','pin'],
+         ['名片','card'],['语音通话','phone'],['视频通话','video'],['群公告','mega']]
+        .map(x=>`<div class="pcell"><span class="pico">${S(x[1])}</span><span>${x[0]}</span></div>`).join('')}
     </div>
   </div>
   <div class="cbar"><span class="pl">${S('mic','l')}</span><div class="fld">输入消息</div>
@@ -1005,12 +1068,12 @@ const forward = () => wrap(`${status()}
 
 const burnChat = () => wrap(`${status()}
   ${bar('测试群')}
-  <div class="burnbar">${S('fire','s')}阅后即焚已开启 · 看到的 10 秒后自动销毁</div>
   <div class="chat">
     <div class="sysmsg">老王 撤回了一条消息</div>
     <div class="ln"><div><div class="b">照片你看完就没了</div></div></div>
     <div class="ln me"><div><div class="b m">收到，已经看过了</div></div></div>
-    <div style="text-align:center;font-size:10.5px;color:#F2557D">🔥 一条消息已焚毁</div>
+    <!-- v7：顶上"阅后即焚已开启"那条横幅去掉了；底下这条跟电脑端一样，倒计时结束后出现、约 2 秒自己消失 -->
+    <div class="sysmsg burnfade" style="color:#F2557D">🔥 一条消息已焚毁</div>
   </div>
   <div class="cbar"><span class="pl">${S('mic','l')}</span><div class="fld">输入消息</div>
     <span class="pl">${S('smile','l')}</span><span class="pl">${S('plusc','l')}</span></div>`);
@@ -1022,7 +1085,7 @@ const profMore = () => wrap(`${status()}
     <div class="veil"></div>
     <div class="prof" style="position:relative;z-index:1">
       <div class="pav" style="margin:0 auto">${im(A.xiang,'xl')}<span class="ondot"></span></div>
-      <div class="nm">象象</div><div class="stt"><i></i>在线</div>
+      <div class="nm">象象</div>
     </div>
     <div style="position:relative;z-index:30;margin:4px 24px 0 auto;width:176px;background:rgba(255,255,255,.97);
       border-radius:14px;box-shadow:0 16px 40px rgba(16,32,64,.2);overflow:hidden;font-size:12.5px">
@@ -1497,7 +1560,7 @@ const help = () => wrap(`${status()}
 const about = () => wrap(`${status()}
   ${bar('关于我们')}
   <div style="text-align:center;padding:24px 0 6px">
-    ${logo(66)}
+    <div style="display:flex;justify-content:center">${logo(66)}</div>
     <div style="font-size:16px;font-weight:700;margin-top:10px">BB鸡</div>
     <div style="font-size:11.5px;color:#8A93A0;margin-top:4px">iOS 版 · v1.0.0（1）</div>
   </div>
@@ -1506,8 +1569,99 @@ const about = () => wrap(`${status()}
     <div class="row tall"><span style="font-size:12.5px">历史公告</span><span class="v">3 条</span><span class="ch">${S('chev','s')}</span></div>
     <div class="row tall"><span style="font-size:12.5px">隐私政策</span><span class="ch">${S('chev','s')}</span></div>
   </div>
+  <!-- v6：底部不再显示服务器地址，只留版权那行 -->
   <div style="text-align:center;font-size:10.5px;color:#B4BECB;margin-top:14px;line-height:1.8">
-    © 2026 BB鸡 · 手机端<br>服务器：bbji.xkmd.cn</div>`);
+    © 2026 BB鸡 · 手机端</div>`);
+
+/* ==================================================================
+   v7 新增：官方公告（走官方账号发）+ 消息页右上角「＋」→ 万能扫一扫
+   ================================================================== */
+const officialList = () => wrap(`${status()}
+  <div class="ltitle"><h1>消息</h1><span class="r">${S('plusc','xl')}</span></div>
+  <div class="srch">${S('search','s')}搜索聊天、联系人、消息</div>
+  <div class="plainlist">
+    <div class="li pin">
+      ${logo(40)}
+      <div class="tx"><div class="nm">BB鸡官方 <span class="chip">官方</span></div>
+        <div class="pv">1.88.19 已发布：设置页合并、托盘图标换了</div></div>
+      <div class="rt"><span class="tm">10:05</span><span class="bdg">1</span></div>
+    </div>
+    <div class="li">${avon(A.xiang,'n',1)}<div class="tx"><div class="nm">象象</div><div class="pv">好的，收到！</div></div>
+      <div class="rt"><span class="tm">09:41</span></div></div>
+    <div class="li">${im(A.test)}<div class="tx"><div class="nm">测试群</div><div class="pv">老王：今晚一起吃饭吧～</div></div>
+      <div class="rt"><span class="tm">09:32</span></div></div>
+  </div>
+  ${tabs(0)}`);
+
+const officialChat = () => wrap(`${status()}
+  ${bar('BB鸡官方')}
+  <div class="chat">
+    <div class="day">今天 10:05</div>
+    <div class="ln">${logo(30)}
+      <div class="b wide ann">
+        <div class="annt">📣 BB鸡 1.88.19 已发布</div>
+        <div class="anb">① 设置页左边合并成 6 项，加了搜索<br>
+          ② 有新版时三处一起亮，更新到最新才灭<br>
+          ③ 托盘图标换成软件自己的图标</div>
+        <div class="anl">在电脑上打开 设置 › 关于 › 检查更新</div>
+      </div></div>
+    <div class="day">公告会一直留在这儿，随时能往回翻</div>
+  </div>
+  <div class="cbar"><span class="pl">${S('mic','l')}</span><div class="fld">输入消息</div>
+    <span class="pl">${S('smile','l')}</span><span class="pl">${S('plusc','l')}</span></div>`);
+
+const plusMenu = () => wrap(`${status()}
+  <div class="ltitle"><h1>消息</h1><span class="r">${S('plusc','xl')}</span></div>
+  <div class="srch">${S('search','s')}搜索聊天、联系人、消息</div>
+  <div class="plainlist" style="position:relative">
+    <div class="veil"></div>
+    <div class="pmenu">
+      <div class="row">${S('scan')}扫一扫<span class="ch">${S('chev','s')}</span></div>
+      <div class="row">${S('addp')}加好友<span class="ch">${S('chev','s')}</span></div>
+      <div class="row">${S('groupadd')}新建群聊<span class="ch">${S('chev','s')}</span></div>
+      <div class="row">${S('qr')}我的二维码<span class="ch">${S('chev','s')}</span></div>
+    </div>
+    <div class="li">${logo(40)}<div class="tx"><div class="nm">BB鸡官方 <span class="chip">官方</span></div>
+      <div class="pv">1.88.19 已发布：设置页合并、托盘图标换了</div></div>
+      <div class="rt"><span class="tm">10:05</span></div></div>
+    <div class="li">${avon(A.xiang,'n',1)}<div class="tx"><div class="nm">象象</div><div class="pv">好的，收到！</div></div>
+      <div class="rt"><span class="tm">09:41</span></div></div>
+  </div>
+  ${tabs(0)}`);
+
+const scanView = () => wrap(`<div class="scanwrap">${status()}
+  <div class="navbar"><span class="back" style="color:#fff">${S('back')}</span><div class="ctr">扫一扫</div>
+    <span style="font-size:12px;color:#fff;width:14px"></span></div>
+  <div class="scanbody">
+    <div class="fr"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span class="beam"></span></div>
+    <div class="hint">对准二维码 / 条形码，放框里就自动识别<br>
+      BB鸡 的码 → 加好友 / 进群 / 登录电脑端<br>
+      别家的码 → 会先问你一句，再帮你跳过去</div>
+  </div></div>`);
+
+const scanAskWechat = () => wrap(`<div class="scanwrap">${status()}
+  <div class="navbar"><span class="back" style="color:#fff">${S('back')}</span><div class="ctr">扫一扫</div>
+    <span style="font-size:12px;color:#fff;width:14px"></span></div>
+  <div class="scanbody">
+    <div class="fr"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></div>
+  </div>
+  <div class="dlg2">
+    <div class="t">这是微信的收款码</div>
+    <div class="m">BB鸡 打不开这个码，要用 <b>微信</b> 打开吗？<br>点「打开微信」才会跳过去 —— <b>不点就不跳</b>。</div>
+    <div class="r"><span>取消</span><span>打开微信</span></div>
+  </div></div>`);
+
+const scanAskWeb = () => wrap(`<div class="scanwrap">${status()}
+  <div class="navbar"><span class="back" style="color:#fff">${S('back')}</span><div class="ctr">扫一扫</div>
+    <span style="font-size:12px;color:#fff;width:14px"></span></div>
+  <div class="scanbody">
+    <div class="fr"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></div>
+  </div>
+  <div class="dlg2">
+    <div class="t">这个码是个网页链接</div>
+    <div class="m">bbji.xkmd.cn/help/…<br>要用 <b>浏览器</b> 打开吗？<br>（支付宝 / 其他 App 的码也一样，先问再跳）</div>
+    <div class="r"><span>取消</span><span>打开浏览器</span></div>
+  </div></div>`);
 
 document.getElementById('board').innerHTML = [
   sec('① 首次进入', '启动 → 登录 / 注册 / 取名字 / 找回密码'),
@@ -1586,6 +1740,14 @@ document.getElementById('board').innerHTML = [
   cell('53','通用设置','主题 / 字号 / 聊天背景 / 自动下载 / 清缓存', general()),
   cell('54','帮助与反馈','常见问题 / 联系官方 / 我提过的（能看到官方回复）', help()),
   cell('55','关于我们','检查更新 / 历史公告 / 隐私政策 / 版本号', about()),
+
+  sec('⑫ 新增 · 官方公告 / 加上号 / 扫一扫','有公告走官方账号发；右上角＋点开就是扫一扫那一套'),
+  cell('56','消息列表（官方公告）','官方账号<b>排在第一位</b>、置顶、带未读红点；点进去 → 57', officialList()),
+  cell('57','公告会话','公告就是官方账号发来的一条消息：标题 + 三条要点 + 一句「去哪更新」；点右上 ⋯ 可以「不再提醒」', officialChat()),
+  cell('58','点右上角＋','四个动作：<b>扫一扫</b> → 59；加好友 → 26；新建群聊 → 26；我的二维码 → 32', plusMenu()),
+  cell('59','扫一扫','对准二维码 / 条形码自动识别；BB鸡 的码直接认（加好友 / 进群 / 登录电脑端）', scanView()),
+  cell('60','扫到别家的码','不是 BB鸡 的码就<b>先问一句</b>：这是微信 / 支付宝的收款码，要不要打开它 —— 点「打开」才跳', scanAskWechat()),
+  cell('61','扫到网页链接','普通链接同理：<b>问过你才开浏览器</b>，不自己跳；扫二维码里的群 / 好友码走 27 / 10', scanAskWeb()),
 ].join('');
 </script>
 </body>

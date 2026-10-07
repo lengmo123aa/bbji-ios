@@ -10,7 +10,7 @@ struct BBjiApp: App {
                 if session.loggedIn {
                     MainTabs().environmentObject(session)
                 } else {
-                    LoginView().environmentObject(session)
+                    AuthFlow().environmentObject(session)      // 0.0.2：启动页 → 登录 / 注册 / 取名字 / 找回
                 }
             }
             .preferredColorScheme(.light)
