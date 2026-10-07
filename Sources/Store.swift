@@ -283,6 +283,12 @@ final class Store: ObservableObject {
         UserDefaults.standard.set(lastRead, forKey: "bbji_lastread")
     }
 
+    /// 撤回自己发的（服务端 10 分钟内有效）
+    func recall(_ id: String) {
+        raw(["t": "recall", "id": id])
+        if let i = msgs.firstIndex(where: { $0.id == id }) { msgs[i].recalled = true }
+    }
+
     private func loadRead() {
         if let d = UserDefaults.standard.dictionary(forKey: "bbji_lastread") as? [String: Double] { lastRead = d }
     }

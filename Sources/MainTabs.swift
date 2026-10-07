@@ -238,6 +238,17 @@ private struct Bubble: View {
                                 : AnyView(Color.white.opacity(0.92)))
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .opacity(m.recalled ? 0.6 : 1)
+                    /* 14 长按消息：复制 / 撤回（自己发的、10 分钟内） */
+                    .contextMenu {
+                        Button { UIPasteboard.general.string = m.text } label: {
+                            Label("复制", systemImage: "doc.on.doc")
+                        }
+                        if mine && !m.recalled && Date().timeIntervalSince1970 * 1000 - m.ts < 10 * 60 * 1000 {
+                            Button(role: .destructive) { store.recall(m.id) } label: {
+                                Label("撤回", systemImage: "arrow.uturn.backward")
+                            }
+                        }
+                    }
             }
             if !mine { Spacer(minLength: 40) }
         }
@@ -253,12 +264,27 @@ struct ContactsView: View {
                 AppBg().ignoresSafeArea()
                 List {
                     Section {
-                        HStack {
-                            Image(systemName: "bubble.left.and.bubble.right.fill").foregroundColor(T.blue)
-                            Text("群聊 · \(store.groups.count) 个")
-                            Spacer()
-                            Text(store.allIn ? "已加入全员群" : "未加入全员群")
-                                .font(.system(size: 11.5)).foregroundColor(T.gray)
+                        /* 全员群 + 我建的/进的群，点进去就是群聊 */
+                        if store.allIn {
+                            NavigationLink(destination: ChatScreen(cid: "all", isGroup: true).environmentObject(store)) {
+                                HStack(spacing: 10) {
+                                    Ava(name: "全员群", size: 34)
+                                    Text("全员群").font(.system(size: 13.5))
+                                    Spacer()
+                                }
+                            }
+                        }
+                        ForEach(store.groups) { g in
+                            NavigationLink(destination: ChatScreen(cid: g.id, isGroup: true).environmentObject(store)) {
+                                HStack(spacing: 10) {
+                                    Ava(name: g.name, size: 34)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(g.name).font(.system(size: 13.5))
+                                        Text("\(g.members.count) 人").font(.system(size: 10.5)).foregroundColor(T.gray)
+                                    }
+                                    Spacer()
+                                }
+                            }
                         }
                     }
                     Section(header: Text("好友 · \(store.friends.count)")) {
