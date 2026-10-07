@@ -284,17 +284,108 @@ struct RowLine: View {
 }
 
 /// 大标题（效果图 .ltitle h1：25px / 700 / 字距 -0.9）
+/* ==================== 统一的自绘导航栏（2026-10-07 用户截图反馈）====================
+   以前 新的朋友 / 加好友 / 我的资料 / 好友资料 用系统的 .navigationTitle，
+   结果：① 左上角是**英文 Back**（App 没做中文本地化），很掉价；
+        ② 系统导航栏 + 系统灰底 #F2F2F7 跟自绘的玻璃/渐变两套风格，一进就像换了个 App。
+   现在统一用它：左 ‹ 返回 + 居中标题（真机 iOS 顶栏 17pt semibold），高 50。 */
+struct DZNavBar<Trailing: View>: View {
+    let title: String
+    @ViewBuilder var trailing: () -> Trailing
+    @Environment(\.presentationMode) private var pm
+    var body: some View {
+        HStack(spacing: 8) {
+            Button {
+                H.tap()
+                pm.wrappedValue.dismiss()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundColor(T.blue)
+                    .frame(width: 34, height: 44, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(PressStyle(scale: 0.86))
+            Spacer(minLength: 0)
+            Text(title).font(.system(size: 17, weight: .semibold)).foregroundColor(T.ink)
+            Spacer(minLength: 0)
+            trailing().frame(width: 34, height: 44, alignment: .trailing)
+        }
+        .padding(.horizontal, 16).frame(height: 50)
+    }
+}
+extension DZNavBar where Trailing == EmptyView {
+    init(_ title: String) { self.init(title: title) { EmptyView() } }
+}
+
+/// 小块标题（「等我同意」这种）
+struct SecLabel: View {
+    let text: String
+    var body: some View {
+        HStack {
+            Text(text).font(.system(size: 13)).foregroundColor(T.sec2)
+            Spacer()
+        }
+        .padding(.horizontal, 16).padding(.bottom, 7).padding(.top, 4)
+    }
+}
+
+/// 空状态（别再让半屏大白）—— 一个淡图标 + 一句人话
+struct EmptyHint: View {
+    let icon: String
+    let text: String
+    var body: some View {
+        VStack(spacing: 9) {
+            Image(systemName: icon)
+                .font(.system(size: 30, weight: .light)).foregroundColor(T.ter2)
+            Text(text).font(.system(size: 13)).foregroundColor(T.sec2)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 30)
+    }
+}
+
+/// 自绘小胶囊按钮（同意 / 拒绝 / 加好友 这种页内按钮）
+struct PillBtn: View {
+    let title: String
+    var kind: Kind = .blue
+    let action: () -> Void
+    enum Kind { case blue, gray, red }
+    private var bg: AnyShapeStyle {
+        switch kind {
+        case .blue: return AnyShapeStyle(T.gradBlue)
+        case .red: return AnyShapeStyle(T.gradRed)
+        case .gray: return AnyShapeStyle(Color.white.opacity(0.85))
+        }
+    }
+    private var fg: Color { kind == .gray ? T.ink2 : .white }
+    var body: some View {
+        Button { H.tap(); action() } label: {
+            Text(title)
+                .font(.system(size: 13.5, weight: .semibold)).foregroundColor(fg)
+                .padding(.horizontal, 16).frame(height: 32)
+                .background(bg)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(kind == .gray ? T.line : Color.clear, lineWidth: 0.5))
+        }
+        .buttonStyle(PressStyle(scale: 0.93))
+    }
+}
+
+/* 2026-10-07（用户真机截图反馈）：效果图是按 270pt 画框画的，×1.455 是"等比放大"，
+   但真机 iOS 的大标题就是 **34pt**（微信 34 / 系统 Large Title 34）。×1.455 得到的 36.4 偏大，
+   而且字距 -1.2 在中文字上显得挤。这里直接改用真机数值。 */
 struct TopTitle<Trailing: View>: View {
     let text: String
     @ViewBuilder var trailing: () -> Trailing
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            Text(text).font(.system(size: 25 * T.k, weight: .bold))
-                .kerning(-1.2).foregroundColor(T.ink)
+            Text(text).font(.system(size: 34, weight: .bold))
+                .kerning(-0.6).foregroundColor(T.ink)
             Spacer(minLength: 0)
             trailing()
         }
-        .padding(.horizontal, 24).padding(.top, 2).padding(.bottom, 16)
+        .padding(.horizontal, 20).padding(.top, 4).padding(.bottom, 10)
     }
 }
 extension TopTitle where Trailing == EmptyView {
@@ -302,23 +393,24 @@ extension TopTitle where Trailing == EmptyView {
 }
 
 /// 搜索框（v3 的 .srch：高 34 / 圆角 15 / 玻璃 + 白 58% / 12px —— 全部 ×k）
+/* 同上：改成真机数值（高 38 / 圆角 11 / 字 15），×1.455 那版 49 高 + 胶囊圆角在真机上太大太圆 */
 struct SearchBar: View {
     let placeholder: String
     var body: some View {
         HStack(spacing: 9) {
-            Image(systemName: "magnifyingglass").font(.system(size: 13 * T.k, weight: .medium))
+            Image(systemName: "magnifyingglass").font(.system(size: 16, weight: .medium))
                 .foregroundColor(Color(red: 0.60, green: 0.63, blue: 0.68))
-            Text(placeholder).font(.system(size: 12 * T.k)).foregroundColor(T.hint)
+            Text(placeholder).font(.system(size: 15)).foregroundColor(T.hint)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 15).frame(height: 34 * T.k)
+        .padding(.horizontal, 12).frame(height: 38)
         .background(.ultraThinMaterial)
         .background(Color.white.opacity(0.58))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)
             .stroke(Color.white.opacity(0.60), lineWidth: 0.5))
         .shadow(color: Color(red: 0.063, green: 0.125, blue: 0.25).opacity(0.04), radius: 4, y: 2)
-        .padding(.horizontal, 20).padding(.bottom, 14)
+        .padding(.horizontal, 16).padding(.bottom, 12)
     }
 }
 
@@ -355,9 +447,9 @@ struct DZTabBar: View {
                     } label: {
                         VStack(spacing: 4) {
                             Image(systemName: sel == i ? items[i].1 : items[i].0)
-                                .font(.system(size: 24, weight: .regular))
+                                .font(.system(size: 23, weight: .regular))
                                 .scaleEffect(sel == i ? 1.0 : 0.94)
-                            Text(items[i].2).font(.system(size: 11.5, weight: sel == i ? .medium : .regular))
+                            Text(items[i].2).font(.system(size: 10.5, weight: sel == i ? .medium : .regular))
                         }
                         .foregroundColor(sel == i ? T.blue : T.tabIdle)
                         .frame(maxWidth: .infinity)
@@ -366,7 +458,7 @@ struct DZTabBar: View {
                     .buttonStyle(PressStyle(scale: 0.92))
                 }
             }
-            .padding(.top, 10).frame(height: 68, alignment: .top)
+            .padding(.top, 7).frame(height: 58, alignment: .top)
         }
         .background(
             ZStack {
@@ -408,8 +500,8 @@ struct Ava: View {
             .frame(width: size, height: size)
             .clipShape(Circle())
             .overlay(Circle().stroke(Color.black.opacity(0.06), lineWidth: 0.5))
-            .saturation(online == false ? 0 : 1)
-            .opacity(online == false ? 0.55 : 1)
+            /* 2026-10-07（截图反馈）：离线不再把整个头像去色 + 变半透明 ——
+               一半好友是灰疙瘩，混在一起看着脏。微信只把在线绿点去掉。 */
             if online == true {
                 Circle().fill(T.gradGreen).frame(width: dot, height: dot)
                     .overlay(Circle().stroke(Color.white.opacity(0.95), lineWidth: 2))
