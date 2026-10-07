@@ -160,6 +160,10 @@ final class Store: ObservableObject {
                 myEmail = (me["email"] as? String) ?? ""
                 if !meName.isEmpty { UserDefaults.standard.set(meName, forKey: "bbji_nick") }
             }
+            /* 服务端偶尔没带 name：别让界面显示账号，先用本地存过的昵称顶一下 */
+            if meName.isEmpty {
+                meName = UserDefaults.standard.string(forKey: "bbji_nick") ?? ""
+            }
             raw(["t": "sync", "since": 0])
         case "auth_err":
             connected = false
@@ -309,6 +313,12 @@ final class Store: ObservableObject {
         if id == meUserId { return meName.isEmpty ? "我" : meName }
         let p = people[id]
         return (p?.display).flatMap { $0.isEmpty ? nil : $0 } ?? p?.name ?? id
+    }
+
+    /// 某个会话的头像（人；群没头像）。别拿账号/名字拼，界面里一律走这个。
+    func avatarId(_ id: String, isGroup: Bool) -> String {
+        if isGroup { return "" }
+        return people[id]?.avatar ?? ""
     }
 
     func thread(_ cid: String) -> [Msg] {
@@ -509,5 +519,16 @@ func timeText(_ ts: Double) -> String {
     if Calendar.current.isDateInToday(d) { f.dateFormat = "HH:mm" }
     else if Calendar.current.isDateInYesterday(d) { return "昨天" }
     else { f.dateFormat = "MM-dd" }
+    return f.string(from: d)
+}
+
+/* 聊天里那条日期分隔线：今天 09:36 / 昨天 09:36 / 10-06 09:36 */
+func dayText(_ ts: Double) -> String {
+    let d = Date(timeIntervalSince1970: ts / 1000)
+    let f = DateFormatter()
+    f.dateFormat = "HH:mm"
+    if Calendar.current.isDateInToday(d) { return "今天 " + f.string(from: d) }
+    if Calendar.current.isDateInYesterday(d) { return "昨天 " + f.string(from: d) }
+    f.dateFormat = "MM-dd HH:mm"
     return f.string(from: d)
 }
