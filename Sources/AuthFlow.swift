@@ -37,12 +37,13 @@ struct AuthFlow: View {
 private struct SplashScreen: View {
     let go: () -> Void
     var body: some View {
+        GeometryReader { geo in
         VStack(spacing: 0) {
             VStack(spacing: 9) {
                 LogoMark(size: 70)
                 Text("BB鸡").font(.system(size: 23, weight: .bold)).foregroundColor(T.ink)
             }
-            .padding(.top, 46)
+            .padding(.top, max(60, geo.size.height * 0.09))
 
             Text("随时随地\n与重要的人聊天")
                 .font(.system(size: 13)).foregroundColor(T.sub)
@@ -60,6 +61,7 @@ private struct SplashScreen: View {
             }
             .padding(.top, 14).padding(.bottom, 30)
         }
+        }
     }
 }
 
@@ -72,13 +74,15 @@ struct LoginScreen: View {
     @State private var password = ""
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
+        /* 顶部留白按屏幕高度算 —— 写死 54 在 6.7 寸上会显得贴顶（用户 2026-10-07 指出） */
+        GeometryReader { geo in
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
                 VStack(spacing: 9) {
                     LogoMark(size: 62)
                     Text("BB鸡").font(.system(size: 23, weight: .bold)).foregroundColor(T.ink)
                 }
-                .padding(.top, 54)
+                .padding(.top, max(70, geo.size.height * 0.12))
                 Text("登录后开始聊天").font(.system(size: 12.5)).foregroundColor(T.sub).padding(.top, 6)
 
                 VStack(spacing: 0) {
@@ -113,9 +117,50 @@ struct LoginScreen: View {
                     }
                 }
                 .padding(.bottom, 26)
+                }
+                .frame(minHeight: geo.size.height, alignment: .top)
             }
-            .frame(minHeight: UIScreen.main.bounds.height - 40)
         }
+    }
+}
+
+/* ==================== 「获取验证码」按钮（点了马上有反应，不会再像没动静） ==================== */
+struct CodeButton: View {
+    let onGet: () async -> String          // 返回 "" = 成功，否则是错误文案
+    let onTip: (String) -> Void
+    @State private var left = 0
+    @State private var busy = false
+    @State private var timer: Timer? = nil
+
+    var body: some View {
+        Button {
+            guard !busy, left == 0 else { return }
+            busy = true
+            onTip("正在发送验证码…")
+            Task {
+                let e = await onGet()
+                busy = false
+                if e.isEmpty {
+                    onTip("✅ 验证码已发出，5 分钟内有效")
+                    left = 60
+                    timer?.invalidate()
+                    timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { t in
+                        left -= 1
+                        if left <= 0 { t.invalidate() }
+                    }
+                } else {
+                    onTip(e)
+                }
+            }
+        } label: {
+            Text(busy ? "发送中…" : (left > 0 ? "\(left) 秒后重发" : "获取验证码"))
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(left > 0 || busy ? T.gray : T.blue)
+                .padding(.vertical, 9).padding(.horizontal, 8)
+                .contentShape(Rectangle())
+        }
+        .disabled(left > 0 || busy)
+        .onDisappear { timer?.invalidate() }
     }
 }
 
@@ -188,25 +233,7 @@ struct RegisterScreen: View {
     }
 
     private var codeButton: some View {
-        Button {
-            Task {
-                let e = await session.sendCode(email, scene: "register")
-                if e.isEmpty {
-                    tip = "✅ 验证码已发到 \(email)"
-                    left = 60
-                    timer?.invalidate()
-                    timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { t in
-                        left -= 1
-                        if left <= 0 { t.invalidate() }
-                    }
-                } else { tip = e }
-            }
-        } label: {
-            Text(left > 0 ? "\(left) 秒后重发" : "获取验证码")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(left > 0 ? T.gray : T.blue)
-        }
-        .disabled(left > 0)
+        CodeButton(onGet: { await session.sendCode(email, scene: "register") }, onTip: { tip = $0 })
     }
 }
 
@@ -314,24 +341,6 @@ struct ForgotScreen: View {
     }
 
     private var codeButton: some View {
-        Button {
-            Task {
-                let e = await session.sendCode(email, scene: "reset")
-                if e.isEmpty {
-                    tip = "✅ 验证码已发到 \(email)"
-                    left = 60
-                    timer?.invalidate()
-                    timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { t in
-                        left -= 1
-                        if left <= 0 { t.invalidate() }
-                    }
-                } else { tip = e }
-            }
-        } label: {
-            Text(left > 0 ? "\(left) 秒后重发" : "获取验证码")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(left > 0 ? T.gray : T.blue)
-        }
-        .disabled(left > 0)
+        CodeButton(onGet: { await session.sendCode(email, scene: "reset") }, onTip: { tip = $0 })
     }
 }
