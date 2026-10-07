@@ -20,7 +20,8 @@ struct Person: Identifiable, Equatable {
     var display: String { remark.isEmpty ? name : remark }
 }
 
-struct Group: Identifiable, Equatable {
+/* ⚠️ 名字不能叫 Group —— SwiftUI 自己有个 Group，会把它遮住（BBjiApp 里 `Group { }` 直接编译不过） */
+struct ChatGroup: Identifiable, Equatable {
     let id: String
     var name: String
     var members: [String] = []
@@ -53,7 +54,7 @@ final class Store: ObservableObject {
     @Published var connected = false
     @Published var people: [String: Person] = [:]
     @Published var friends: [Person] = []
-    @Published var groups: [Group] = []
+    @Published var groups: [ChatGroup] = []
     @Published var allIn = false
     @Published var msgs: [Msg] = []
     @Published var lastRead: [String: Double] = [:]
@@ -127,7 +128,7 @@ final class Store: ObservableObject {
               let t = o["t"] as? String else { return }
         switch t {
         case "hello":
-            raw(["t": "auth", token: token])
+            raw(["t": "auth", "token": token])
         case "authed":
             connected = true
             meUserId = (o["userId"] as? String) ?? ""
@@ -135,7 +136,7 @@ final class Store: ObservableObject {
                 meName = (me["name"] as? String) ?? ""
                 meId = (me["bbjiId"] as? String) ?? (me["account"] as? String) ?? ""
             }
-            raw(["t": "sync", since: 0])
+            raw(["t": "sync", "since": 0])
         case "auth_err":
             connected = false
             onAuthFail?()
@@ -196,8 +197,8 @@ final class Store: ObservableObject {
         if let g = o["groups"] as? [[String: Any]] {
             groups = g.compactMap { x in
                 guard let id = x["id"] as? String else { return nil }
-                return Group(id: id, name: (x["name"] as? String) ?? "群聊",
-                             members: (x["members"] as? [[String: Any]])?.compactMap { $0["id"] as? String } ?? [])
+                return ChatGroup(id: id, name: (x["name"] as? String) ?? "群聊",
+                                 members: (x["members"] as? [[String: Any]])?.compactMap { $0["id"] as? String } ?? [])
             }
         }
         if let a = o["allIn"] as? Bool { allIn = a }
@@ -219,7 +220,7 @@ final class Store: ObservableObject {
         guard !s.isEmpty, !token.isEmpty else { return }
         let cid = "c" + String(Int(Date().timeIntervalSince1970 * 1000))
         msgs.append(Msg(id: cid, from: meUserId, to: to, text: s, ts: Date().timeIntervalSince1970 * 1000))
-        raw(["t": "send", to: to, text: s, cid: cid])
+        raw(["t": "send", "to": to, "text": s, "cid": cid])
     }
 
     var meUserId = ""      // 服务端给的 userId（authed 里没有，用 people 找自己）
