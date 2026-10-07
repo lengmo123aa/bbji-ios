@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --blue:#0A84FF;--blue-d:#0A6FD8;
+    --ink:#0B0D12;--ink2:#2C323C;
+    --sec:#8A93A0;--ter:#AAB2BD;
+    --sep:rgba(60,60,67,.085);
+    --page:#F4F6FA;--card:#FFFFFF;--search:#EBEEF4;
+    --red:#FF3B30;--orange:#FF9500;--green:#34C759;--purple:#7B5CF0;--pink:#F2557D;--teal:#1E9EE0;
+  }
+  body{
+    background:linear-gradient(168deg,#EDF1F8 0%,#F4F6FA 55%,#FAF7F4 100%);
+    padding:40px 26px;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+  .board{display:grid;grid-template-columns:repeat(4,282px);gap:34px 28px;justify-content:center}
+
+  /* ================= 外壳 ================= */
+  .ph{width:282px;height:596px;border-radius:44px;background:#0B0E13;padding:6px;position:relative;
+    box-shadow:0 16px 36px rgba(84,112,158,.15)}
+  .ph::after{content:"";position:absolute;inset:3px;border-radius:41px;
+    border:1px solid rgba(255,255,255,.085);pointer-events:none}
+  .scr{position:relative;width:270px;height:584px;border-radius:38px;overflow:hidden;
+    display:flex;flex-direction:column;background:var(--page)}
+  .island{position:absolute;left:50%;top:7px;transform:translateX(-50%);width:66px;height:17px;
+    border-radius:9px;background:#0B0E13;z-index:40}
+  .home{position:absolute;left:50%;bottom:7px;transform:translateX(-50%);width:100px;height:4px;
+    border-radius:2px;background:rgba(11,13,18,.20);z-index:40}
+
+  /* ================= 状态栏 ================= */
+  .st{height:32px;flex:none;align-self:stretch;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 17px 4px;font-size:10.5px;font-weight:600;color:var(--ink);letter-spacing:.15px}
+  .st .r{display:flex;align-items:center;gap:3.5px}
+
+  /* ================= 图标 ================= */
+  .ico{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;
+    stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .ico.s{width:13px;height:13px;stroke-width:1.7}
+  .ico.l{width:19px;height:19px}
+  .ico.xl{width:22px;height:22px}
+
+  /* ================= 导航 ================= */
+  .ltitle{padding:2px 18px 12px;display:flex;align-items:flex-end}
+  .ltitle h1{font-size:25px;font-weight:700;color:var(--ink);letter-spacing:-.8px;line-height:1}
+  .ltitle .r{margin-left:auto;color:var(--blue);display:grid;place-items:center;padding-bottom:1px}
+  .navbar{height:42px;flex:none;display:flex;align-items:center;gap:8px;padding:0 14px}
+  .navbar .back{color:var(--blue);display:grid;place-items:center;width:14px;stroke-width:2}
+  .navbar .nt{flex:1;min-width:0}
+  .navbar .nt .n{font-size:14.5px;font-weight:600;color:var(--ink);letter-spacing:-.2px;
+    display:flex;align-items:center;gap:5px}
+  .navbar .nt .s{font-size:10px;color:var(--sec);margin-top:1.5px}
+  .navbar .rs{display:flex;gap:13px;color:var(--blue);align-items:center}
+  .navbar .ctr{flex:1;text-align:center;font-size:15px;font-weight:600;color:var(--ink);letter-spacing:-.2px}
+
+  .av{border-radius:50%;flex:none;object-fit:cover;background:#E7EBF1;display:block}
+  .av.n{width:40px;height:40px}
+  .av.m{width:30px;height:30px}
+  .av.s{width:24px;height:24px}
+  .av.xl{width:84px;height:84px}
+  /* ===== v6（用户 2026-10-07 要求）=====
+     ① 在线状态只用一个「头像右下角绿点」表示；不在线 = 头像变灰，名字后面不再写「在线」 */
+  .avw{position:relative;flex:none;display:block}
+  .avw .av{margin:0}
+  .avw .ondot{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;
+    background:linear-gradient(180deg,#5FD97E,#34C759);box-shadow:0 0 0 2px rgba(255,255,255,.95);display:block}
+  .av.off{filter:grayscale(1) contrast(.94);opacity:.55}
+  .fireico{font-size:11px;line-height:1;margin-left:2px}
+  /* ② 左滑：操作按钮就贴在那一行里、跟行一样高，是「行被推出去、按钮盖住」，不撑高、不影响下面的行 */
+  .swrow{position:relative;overflow:hidden}
+  .swrow .acts2{position:absolute;right:0;top:0;bottom:0;display:flex}
+  .swrow .acts2 span{width:56px;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:500}
+  .swrow .acts2 .p1{background:#C3CBD8}
+  .swrow .acts2 .p2{background:#F0913F}
+  .swrow .acts2 .p3{background:#FF3B30}
+  .swrow .li{position:relative;background:#fff;transition:none}
+  /* ===== v7（用户 2026-10-07 要求）=====
+     ① 加号面板换成"最开始那版/微信那种"简约风：浅灰条 + 白方块 + 单色细线图标 */
+  .ppanel{flex:none;background:#F2F4F8;border-top:1px solid #E7ECF3;padding:14px 10px 16px}
+  .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;text-align:center}
+  .pcell{font-size:10.5px;color:#7B8595;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .pico{width:46px;height:46px;border-radius:14px;background:#fff;display:grid;place-items:center;
+    color:#3C4658;box-shadow:0 4px 10px rgba(20,30,52,.07)}
+  .pico .ico{width:22px;height:22px;stroke-width:1.5}
+  /* ② 官方公告（消息列表里的一行 + 打开后的公告气泡） */
+  .oav{width:40px;height:40px;flex:none}
+  .ann .annt{font-size:12.5px;font-weight:600;margin-bottom:6px}
+  .ann .anb{font-size:12px;color:#5A6472;line-height:1.7}
+  .ann .anl{margin-top:8px;font-size:11.5px;color:var(--blue);font-weight:500}
+  .b.wide{max-width:214px}
+  /* ③ 消息页右上角「＋」点开的菜单 + 扫一扫 */
+  .pmenu{position:relative;z-index:30;margin:2px 14px 0 auto;width:170px;background:rgba(255,255,255,.98);
+    border-radius:14px;box-shadow:0 16px 40px rgba(16,32,64,.22);overflow:hidden}
+  .pmenu .row{font-size:12.5px;gap:9px;min-height:40px;color:var(--ink)}
+  .pmenu .row .ico{color:#4A8BF6}
+  /* 注意：`.scr > *` 那条规则会把子元素强制成 position:relative，所以这条必须写 `.scr > .scanwrap` 才压得住 */
+  .scr > .scanwrap{position:absolute;inset:0;background:#0E141C;display:flex;flex-direction:column;z-index:6}
+  .scanwrap .st{color:#fff}
+  .scanwrap .navbar .ctr{color:#fff}
+  .scanbody{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+  .scanbody .fr{width:188px;height:188px;border-radius:22px;position:relative;background:rgba(255,255,255,.05);
+    box-shadow:0 0 0 2000px rgba(6,10,16,.62)}
+  .scanbody .fr i{position:absolute;width:26px;height:26px;border:3px solid #fff;border-radius:5px}
+  .scanbody .fr .l1{left:-2px;top:-2px;border-right:0;border-bottom:0;border-radius:6px 0 0 0}
+  .scanbody .fr .l2{right:-2px;top:-2px;border-left:0;border-bottom:0;border-radius:0 6px 0 0}
+  .scanbody .fr .l3{left:-2px;bottom:-2px;border-right:0;border-top:0;border-radius:0 0 0 6px}
+  .scanbody .fr .l4{right:-2px;bottom:-2px;border-left:0;border-top:0;border-radius:0 0 6px 0}
+  .scanbody .fr .beam{position:absolute;left:12px;right:12px;top:50%;height:2px;border-radius:2px;
+    background:linear-gradient(90deg,rgba(74,168,255,0),#4AA8FF,rgba(74,168,255,0))}
+  .scanbody .hint{font-size:11.5px;color:rgba(255,255,255,.82);text-align:center;line-height:1.8;padding:0 30px}
+  .dlg2{position:absolute;left:16px;right:16px;bottom:56px;background:#fff;border-radius:16px;overflow:hidden;
+    box-shadow:0 20px 50px rgba(8,14,24,.4);z-index:20}
+  .dlg2 .t{padding:16px 18px 6px;font-size:13.5px;font-weight:600;text-align:center}
+  .dlg2 .m{padding:0 18px 15px;font-size:12px;color:#6A7480;line-height:1.75;text-align:center}
+  .dlg2 .m b{color:var(--ink)}
+  .dlg2 .r{display:flex;border-top:.5px solid var(--sep)}
+  .dlg2 .r span{flex:1;text-align:center;padding:13px 0;font-size:13px;color:var(--blue)}
+  .dlg2 .r span+span{border-left:.5px solid var(--sep);font-weight:600}
+
+  /* ================= 搜索 ================= */
+  .srch{margin:0 14px 10px;height:34px;border-radius:11px;background:var(--search);
+    display:flex;align-items:center;gap:6px;padding:0 10px;font-size:12px;color:#98A1AE}
+  .srch .ico{color:#9AA3B0;stroke-width:1.7}
+
+  /* ================= 分组列表 ================= */
+  .grp{margin:0 14px 12px;background:var(--card);border-radius:13px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(84,112,158,.04)}
+  .grp:last-of-type{margin-bottom:0}
+  .ghead{font-size:11px;color:var(--sec);font-weight:400;padding:14px 20px 6px;letter-spacing:.2px}
+  .row{display:flex;align-items:center;gap:10px;padding:6px 16px;position:relative;
+    font-size:12.5px;color:var(--ink);font-weight:400;min-height:36px}
+  .row.tall{min-height:44px;padding:7px 16px}
+  .row + .row::before{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--sep)}
+  .row.ic + .row.ic::before{left:47px}
+  .row .v{margin-left:auto;font-size:11.5px;color:var(--ter);font-weight:400}
+  .row .ch{color:#C9D0D9;display:grid;place-items:center;margin-left:auto;stroke-width:1.7}
+  .row .v + .ch{margin-left:6px}
+  .row.danger{color:var(--red);justify-content:center}
+  .row .ic{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+  .row .ic .ico{width:12px;height:12px;stroke-width:1.8}
+  .c1{background:var(--purple)}.c2{background:var(--pink)}.c3{background:var(--orange)}
+  .c4{background:var(--blue)}.c5{background:var(--green)}.c6{background:var(--teal)}
+  .c7{background:#9AA6B4}.c8{background:#B4BECB}
+  .sw{width:38px;height:23px;border-radius:11.5px;background:#E6EAF0;position:relative;flex:none;margin-left:auto}
+  .sw i{position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;
+    box-shadow:0 1px 2.5px rgba(60,60,67,.18)}
+  .sw.on{background:var(--green)}.sw.on i{left:17px}
+  .btn{height:42px;border-radius:12px;background:#FFF1F2;color:#FA5A52;font-size:13px;font-weight:500;
+    display:grid;place-items:center;margin:14px 14px 0}
+
+  /* ================= 聊天列表（无卡片） ================= */
+  .plainlist{flex:1;overflow:hidden}
+  .li{display:flex;align-items:center;gap:11px;padding:8px 16px;position:relative;background:transparent}
+  .li + .li::before{content:"";position:absolute;left:0;right:0;top:0;height:.5px;background:var(--sep)}
+  .li.pin{background:rgba(10,132,255,.045)}
+  .li .tx{flex:1;min-width:0}
+  .li .nm{font-size:13.5px;font-weight:600;color:var(--ink);letter-spacing:-.2px;
+    display:flex;align-items:center;gap:6px}
+  .li .pv{font-size:12px;color:var(--sec);margin-top:2.5px;font-weight:400;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .li .rt{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none;padding-left:6px}
+  .li .tm{font-size:11px;color:var(--ter);font-weight:400}
+  .bdg{min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;
+    font-weight:600;display:grid;place-items:center;padding:0 5px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--red)}
+  .chip{font-size:9px;font-weight:600;color:var(--blue);background:rgba(10,132,255,.10);
+    border-radius:4px;padding:1.5px 5px;letter-spacing:.2px;flex:none}
+  .chip.grey{color:#8A93A0;background:rgba(120,130,145,.11)}
+  .chip.fire{color:#F2557D;background:rgba(242,85,125,.11)}
+  .mute{color:#B9C1CB;display:grid;place-items:center}
+  .tick{color:var(--blue);display:grid;place-items:center;opacity:.9}
+  .pinmark{color:var(--blue);opacity:.75}
+
+  /* ================= 底部 Tab ================= */
+  .tab{height:58px;flex:none;display:flex;align-items:flex-start;padding-top:8px;
+    background:rgba(250,251,253,.94);border-top:.5px solid var(--sep)}
+  .tab div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+    font-size:9px;color:#A4ACB8;font-weight:400;letter-spacing:.1px}
+  .tab div.on{color:var(--blue);font-weight:500}
+  .tab .ico{width:19px;height:19px;stroke-width:1.7}
+
+  /* ================= 聊天气泡 ================= */
+  .chat{flex:1;padding:4px 14px 8px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+  .day{text-align:center;font-size:10.5px;color:var(--ter);font-weight:400}
+  .sysmsg{text-align:center;font-size:10.5px;color:var(--ter)}
+  .who{font-size:10.5px;color:var(--sec);margin:0 0 4px 36px}
+  .ln{display:flex;gap:8px;align-items:flex-start}
+  .ln.me{justify-content:flex-end}
+  .b{max-width:186px;padding:9px 12px;border-radius:16px;font-size:12.5px;line-height:1.45;
+    background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(84,112,158,.045);word-break:break-word}
+  .b.m{background:var(--blue);color:#fff;box-shadow:0 1px 2px rgba(10,132,255,.14)}
+  .b.q{position:relative;overflow:hidden}
+  .b .quote{border-left:2px solid rgba(10,132,255,.35);padding-left:8px;margin-bottom:6px;
+    font-size:11px;color:var(--sec);line-height:1.4}
+  .b.m .quote{border-left-color:rgba(255,255,255,.5);color:rgba(255,255,255,.82)}
+  .b.pic,.b.file{padding:0;overflow:hidden}
+  .b.pic img{display:block;width:132px;height:132px;object-fit:cover}
+  .b.file{display:flex;align-items:center;gap:10px;padding:10px 12px;width:172px}
+  .b.file .fi{width:34px;height:34px;border-radius:9px;background:rgba(10,132,255,.10);color:var(--blue);
+    display:grid;place-items:center;flex:none}
+  .b.file .fn{font-size:12px;font-weight:500;color:var(--ink)}
+  .b.file .fs{font-size:10px;color:var(--sec);margin-top:2px}
+  .voice{display:flex;align-items:center;gap:8px;width:150px}
+  .voice .pw{width:26px;height:26px;border-radius:50%;background:rgba(10,132,255,.10);color:var(--blue);
+    display:grid;place-items:center;flex:none}
+  .b.m .voice .pw{background:rgba(255,255,255,.22);color:#fff}
+  .voice .wv{flex:1;display:flex;align-items:center;gap:1.6px;height:16px}
+  .voice .wv i{width:2px;border-radius:1px;background:#C3CEDB;display:block}
+  .b.m .voice .wv i{background:rgba(255,255,255,.62)}
+  .voice .t{font-size:10.5px;color:var(--sec);flex:none}
+  .b.m .voice .t{color:rgba(255,255,255,.85)}
+  .receipt{font-size:9.5px;color:var(--ter);margin-top:4px;text-align:right}
+  .receipt.blue{color:var(--blue);opacity:.75}
+  .burnbar{display:flex;align-items:center;justify-content:center;gap:5px;font-size:10px;
+    color:#F2557D;background:rgba(242,85,125,.075);padding:6px 0;flex:none}
+  .cbar{flex:none;display:flex;align-items:center;gap:9px;padding:9px 14px 20px;
+    background:rgba(252,253,255,.94);border-top:.5px solid var(--sep)}
+  .cbar .pl{color:#9AA3B0;display:grid;place-items:center}
+  .fld{flex:1;height:34px;border-radius:11px;background:#F1F3F7;display:flex;align-items:center;
+    padding:0 12px;font-size:12px;color:#9EA7B3}
+
+  /* ================= 资料页 ================= */
+  .prof{padding:4px 0 14px;text-align:center}
+  .prof .nm{font-size:18px;font-weight:600;color:var(--ink);margin-top:10px;letter-spacing:-.4px}
+  .prof .stt{font-size:11px;color:var(--blue);margin-top:4px;display:flex;align-items:center;
+    justify-content:center;gap:5px}
+  .prof .stt i{width:6px;height:6px;border-radius:50%;background:var(--green);display:block}
+  .acts{display:flex;justify-content:center;gap:10px;margin:12px 0 14px;padding:0 14px}
+  .acts a{flex:1;background:var(--card);border-radius:12px;padding:9px 0;
+    display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;color:var(--ink2);
+    box-shadow:0 1px 2px rgba(84,112,158,.045);text-decoration:none}
+  .acts a .ico{color:var(--blue);width:17px;height:17px}
+
+  /* ================= 新建聊天 ================= */
+  .quick{display:flex;gap:11px;padding:0 14px 6px}
+  .quick a{flex:1;background:var(--card);border-radius:13px;padding:13px 0 11px;text-align:center;
+    text-decoration:none;box-shadow:0 1px 2px rgba(84,112,158,.045)}
+  .quick a .cir{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;
+    background:var(--blue);color:#fff}
+  .quick a .cir.g{background:#F1F3F7;color:#7A8492}
+  .quick a span{font-size:10.5px;color:var(--ink2)}
+
+  /* ================= 群公告 ================= */
+  .notice{margin:0 14px 10px;background:rgba(10,132,255,.07);border-radius:11px;padding:9px 12px;
+    display:flex;align-items:center;gap:8px;font-size:11.5px;color:#2C5C93}
+  .notice .ico{color:var(--blue);flex:none}
+  .notice b{font-weight:600;color:var(--blue)}
+  .notice .more{margin-left:auto;color:#9DB4CE;display:grid;place-items:center}
+
+  /* ================= 媒体 ================= */
+  .seg{display:flex;gap:3px;margin:0 14px 12px;background:var(--search);border-radius:10px;padding:3px}
+  .seg span{flex:1;text-align:center;font-size:12px;color:#8A93A0;padding:6px 0;border-radius:8px}
+  .seg span.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(84,112,158,.10)}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:0 14px}
+  .cell{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#EBEFF4}
+  .cell img{width:100%;height:100%;object-fit:cover;display:block}
+  .cell .sel{position:absolute;right:5px;top:5px;width:15px;height:15px;border-radius:50%;
+    border:1.4px solid rgba(255,255,255,.95);background:rgba(255,255,255,.28);
+    box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  .cell .sel.on{background:var(--blue);border-color:#fff}
+  .cell .sel.on::after{content:"";position:absolute;left:4px;top:1.6px;width:4px;height:8px;
+    border:1.5px solid #fff;border-top:0;border-left:0;transform:rotate(42deg)}
+  .mbar{flex:none;display:flex;align-items:center;gap:10px;padding:12px 14px 22px;
+    border-top:.5px solid var(--sep);background:rgba(252,253,255,.94)}
+  .mbar .pv{font-size:12.5px;color:var(--ink);font-weight:500}
+  .mbar .sub{font-size:10px;color:var(--sec);margin-top:1px}
+  .sendb{margin-left:auto;width:38px;height:38px;border-radius:50%;background:var(--blue);
+    display:grid;place-items:center;color:#fff;box-shadow:0 2px 6px rgba(10,132,255,.20)}
+
+  /* ================= 引导 ================= */
+  .splash{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 26px}
+  .brand{display:flex;align-items:center;gap:10px;margin-top:76px}
+  .brand b{font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-1px}
+  /* v5（用户要求）：01/02/03 的标识改成「图标在上、名字在图标下面」，图标也放大 */
+  .brandv{display:flex;flex-direction:column;align-items:center;gap:9px}
+  .brandv b{font-size:23px;font-weight:700;color:var(--ink);letter-spacing:-.6px}
+  .tag{font-size:13px;color:#71798A;line-height:1.8;text-align:center;margin-top:14px;letter-spacing:.3px}
+  .tag2{font-size:11px;color:#AEB6C1;margin-top:10px;letter-spacing:.4px}
+  .glass{position:relative;width:238px;height:204px;margin:8px 0 0}
+  .glass .o1{position:absolute;left:16px;top:18px;width:190px;height:190px;
+    border-radius:52% 48% 46% 54% / 56% 52% 48% 44%;
+    background:
+      radial-gradient(58% 52% at 32% 24%,rgba(255,255,255,.99),rgba(255,255,255,.20) 42%,rgba(255,255,255,0) 68%),
+      radial-gradient(74% 74% at 68% 74%,rgba(142,180,238,.88),rgba(188,210,246,.52) 54%,rgba(255,255,255,0) 80%),
+      linear-gradient(150deg,rgba(220,233,252,.97),rgba(180,204,242,.84));
+    box-shadow:inset 0 0 32px rgba(255,255,255,.96),inset -14px -16px 32px rgba(132,168,230,.46),
+      0 18px 38px rgba(126,160,214,.19)}
+  .glass .o1::after{content:"";position:absolute;left:20%;top:12%;width:32%;height:22%;
+    border-radius:50%;background:rgba(255,255,255,.88);filter:blur(3px);transform:rotate(-18deg)}
+  .glass .o2{position:absolute;right:2px;top:2px;width:86px;height:86px;border-radius:50%;
+    background:
+      radial-gradient(58% 52% at 34% 26%,rgba(255,255,255,.99),rgba(255,255,255,.16) 46%,rgba(255,255,255,0) 70%),
+      linear-gradient(150deg,rgba(228,238,253,.95),rgba(194,214,247,.80));
+    box-shadow:inset 0 0 18px rgba(255,255,255,.96),inset -8px -9px 18px rgba(146,178,234,.36),
+      0 11px 24px rgba(126,160,214,.15)}
+  .glass .o3{position:absolute;left:-2px;bottom:2px;width:60px;height:60px;border-radius:50%;
+    background:linear-gradient(150deg,rgba(240,245,253,.92),rgba(212,227,248,.68));
+    box-shadow:inset 0 0 15px rgba(255,255,255,.93),0 9px 20px rgba(126,160,214,.13)}
+  .cta{height:50px;border-radius:25px;background:var(--blue);color:#fff;font-size:15px;font-weight:600;
+    display:grid;place-items:center;width:100%;
+    box-shadow:0 3px 10px rgba(10,132,255,.22);letter-spacing:.2px}
+  .link{margin:14px 0 24px;font-size:13px;color:var(--blue);font-weight:400}
+  .dots{display:flex;gap:7px;margin-top:auto;margin-bottom:18px}
+  .dots i{width:6px;height:6px;border-radius:50%;background:#D2DAE5;display:block}
+  .dots i.on{background:var(--blue);width:18px;border-radius:3px}
+
+  /* ================= 质感层 v3：液态玻璃 / 通透（加强版）=================
+     2026-10-06 用户反馈 v2「感觉不出来太大变化」→ 这一版按参考图的"比例"再加一档：
+     ① 背景渐变更明显、光晕更大  ② 卡片更透（看得见背景）  ③ 头像/行高按参考图放大比例
+     结构、屏数、文案、Tab 数量仍然一个没动。 */
+  :root{
+    --blue:#4A8BF6;--blue-d:#3D7BE8;
+    --sec:#93A0B0;--ter:#BEC6D2;
+    --sep:rgba(60,60,67,.045);
+    --card:rgba(255,255,255,.50);--search:rgba(255,255,255,.58);
+  }
+  body{background:linear-gradient(168deg,#E3ECFB 0%,#F1F6FD 42%,#F7F1FB 100%)}
+  .ph{box-shadow:0 34px 80px rgba(84,112,158,.24)}
+  /* ① 页面级背景：淡蓝紫渐变 + 两个柔光球（"有空气"的关键） */
+  .scr{background:linear-gradient(168deg,#E9F1FD 0%,#F5F9FE 44%,#F2EFFC 100%)}
+  .scr::before,.scr::after{content:"";position:absolute;border-radius:50%;z-index:0;pointer-events:none}
+  .scr::before{width:290px;height:290px;left:-90px;top:-110px;filter:blur(10px);
+    background:radial-gradient(circle at 38% 36%,rgba(126,176,255,.62),rgba(126,176,255,0) 62%)}
+  .scr::after{width:265px;height:265px;right:-96px;top:140px;filter:blur(12px);
+    background:radial-gradient(circle at 60% 40%,rgba(186,166,255,.50),rgba(186,166,255,0) 66%)}
+  .scr > *{position:relative;z-index:1}
+  /* ② 分组卡：更透（看得见背后渐变）+ 大圆角 + 一道"玻璃边"高光 */
+  .grp{background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-radius:24px;box-shadow:0 10px 26px rgba(16,32,64,.05)}
+  /* 卡片里不要一条条的分割线（用户 2026-10-06：菜单之间不该有那些间隔） */
+  .row + .row::before,.li + .li::before{display:none}
+  /* 资料页头像居中（原来是 display:block 靠左，一直都偏 —— 用户指出来了） */
+  .prof .av{margin:0 auto}
+  /* 在线状态直接标在头像上（右下角绿点），头像下面那行"在线"不要了 */
+  .prof .pav{position:relative;width:84px;height:84px;margin:0 auto}
+  .prof .pav .av{margin:0}
+  .prof .pav .ondot{position:absolute;right:2px;bottom:2px;width:16px;height:16px;border-radius:50%;
+    background:linear-gradient(180deg,#5FD97E,#34C759);box-shadow:0 0 0 2.5px rgba(255,255,255,.92)}
+  /* 资料页再收一点高度：去掉了分割线之后下面那块还是差 ~18px 才能放下 3 行开关，
+     把上下留白压一压（内容一行没少） */
+  .prof{padding:2px 0 8px}
+  .acts{margin:8px 0 10px}
+  .acts a{padding:7px 0}
+  /* ③ 更淡的线与辅助字
+     ⚠️ 「设置页有 10 行 + 资料页 6 行」，行高一动就会把最后几行挤出屏幕（v2 第一版踩过、v3 也踩了一次）——
+     所以行高 / padding 保持原样，房间感靠"头像变大 + 背景更透 + 卡片更玻璃 + Tab 更高"来给。 */
+  .row{padding:6px 16px}
+  .row.tall{padding:7px 16px}
+  .row + .row::before{background:rgba(60,60,67,.045)}
+  .row .v{color:#BEC6D2}
+  .row .ch{color:#CFD7E0}
+  .ghead{color:#93A0B0}
+  /* ④ 图标圆底 → 柔和渐变（尺寸还是 22px，只把圆形改成圆角方块）；开关 → 渐变（尺寸不变） */
+  .row .ic{border-radius:7px;box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+  .c1{background:linear-gradient(160deg,#C6A9FF,#8E6BF0)}
+  .c2{background:linear-gradient(160deg,#FFA9C4,#F2557D)}
+  .c3{background:linear-gradient(160deg,#FFC182,#F0913F)}
+  .c4{background:linear-gradient(160deg,#7FB6FF,#4A8BF6)}
+  .c5{background:linear-gradient(160deg,#8FE3B0,#38B26A)}
+  .c6{background:linear-gradient(160deg,#8FDDE8,#2E9FB2)}
+  .c7,.c8{background:linear-gradient(160deg,#C3CBD8,#8A94A2)}
+  .sw{background:#DCE1E9}
+  .sw.on{background:linear-gradient(180deg,#7DB3FF,#4A8BF6)}
+  /* ⑤ 搜索 / 输入条 / 底栏 / Tab → 玻璃条 */
+  .srch{background:var(--search);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-radius:15px;box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 2px 8px rgba(16,32,64,.04)}
+  .cbar,.mbar{background:rgba(255,255,255,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-top:.5px solid rgba(60,60,67,.06)}
+  .fld{background:rgba(255,255,255,.78);backdrop-filter:blur(10px);border-radius:13px}
+  .tab{background:rgba(255,255,255,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border-top:.5px solid rgba(60,60,67,.05);height:62px}
+  .tab div{letter-spacing:.1px}
+  /* ⑥ 大标题更粗、主按钮/发送键换成浅蓝渐变胶囊 + 内高光 */
+  .ltitle h1{letter-spacing:-.9px}
+  .cta,.btn,.sendb{background:linear-gradient(180deg,#79B0FF,#4A8BF6);
+    box-shadow:0 12px 26px rgba(74,139,246,.32),inset 0 1px 0 rgba(255,255,255,.45)}
+  .btn{color:#fff;font-weight:600;border-radius:20px}
+  .sendb{box-shadow:0 8px 18px rgba(74,139,246,.30),inset 0 1px 0 rgba(255,255,255,.42)}
+  .quick a .cir{background:linear-gradient(160deg,#7FB6FF,#4A8BF6);
+    box-shadow:0 8px 18px rgba(74,139,246,.28),inset 0 1px 0 rgba(255,255,255,.40)}
+  /* 聊天气泡：玻璃 + 渐变 */
+  .b{background:rgba(255,255,255,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-radius:18px;box-shadow:0 2px 8px rgba(16,32,64,.06)}
+  .b.m{background:linear-gradient(180deg,#71ABFF,#4A8BF6);
+    box-shadow:0 6px 16px rgba(74,139,246,.30),inset 0 1px 0 rgba(255,255,255,.35)}
+  .b.pic img{border-radius:18px}
+  .voice .pw{background:rgba(74,139,246,.12);color:#4A8BF6}
+  /* 资料页四个操作块 / 新建聊天三块 / 群公告 / 分段控件 / 媒体格 */
+  .acts a,.quick a{background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-radius:18px;box-shadow:0 6px 20px rgba(16,32,64,.06)}
+  .acts a .ico{color:#4A8BF6}
+  .notice{background:rgba(106,168,255,.16);border-radius:14px;color:#1E4E8C}
+  .notice b,.notice .ico{color:#3D7BE8}
+  .seg{background:rgba(255,255,255,.72);backdrop-filter:blur(10px);border-radius:13px}
+  .seg span.on{background:linear-gradient(180deg,#79B0FF,#4A8BF6);color:#fff;
+    box-shadow:0 4px 12px rgba(74,139,246,.28)}
+  .cell{border-radius:14px}
+  /* 头像放大一档（按参考图比例）/ 聊天列表更松 / 角标 */
+  .av{box-shadow:0 0 0 .5px rgba(15,23,41,.10) inset}
+  .av.n{width:46px;height:46px}
+  .li{padding:4px 16px}   /* 头像放大到 46 之后，行距收到 4px，否则"新建聊天"那页最后一行会被切掉 */
+  .quick a{padding:11px 0 9px}
+  .li + .li::before{background:rgba(60,60,67,.045)}
+  .li.pin{background:rgba(106,168,255,.10)}
+  .li .nm{font-size:14px;letter-spacing:-.25px}
+  .li .pv{font-size:12.5px}
+  .chip{background:rgba(74,139,246,.12);color:#4A8BF6;border-radius:6px}
+  .bdg{background:linear-gradient(180deg,#FF6B5B,#F0463A);box-shadow:0 1px 3px rgba(240,70,58,.35)}
+  .burnbar{background:rgba(242,85,125,.09)}
+  .day,.sysmsg,.receipt{color:#B7BFCA}
+  .prof .nm{font-weight:700;letter-spacing:-.5px}
+
+  /* ==== App 覆盖：铺满屏幕、吃安全区（在 iPhone 上由 WebView 满屏渲染） ==== */
+  html,body{height:100%;margin:0;padding:0;background:#F5F9FE;overflow:hidden;display:block}
+  body>*{margin:0 !important;padding:0 !important}
+  .ph{position:fixed;left:0;top:0;width:100vw;height:100vh;border-radius:0;padding:0;
+      background:transparent;box-shadow:none}
+  .scr{width:100%;height:100%;border-radius:0;padding-top:env(safe-area-inset-top);
+       padding-bottom:env(safe-area-inset-bottom);box-sizing:border-box}
+  .scr .st{display:none}                       /* 真机有真状态栏，假的不要 */
+  .scr .home{display:none}
+  .scr .island{display:none}
+  .tab{padding-bottom:0}
+  /* 头像（真界面用，效果图里是 av 类） */
+  .zav{position:relative;flex:none;display:block;border-radius:50%;overflow:visible}
+  .zav .zic{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;
+    color:#fff;font-size:40%;font-weight:600}
+  .zav img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover}
+  .zav.off .zic{filter:grayscale(1);opacity:.5}
+  .zav .zod{position:absolute;right:0;bottom:0;width:30%;height:30%;border-radius:50%;
+    background:linear-gradient(180deg,#5FD97E,#34C759);box-shadow:0 0 0 2px rgba(255,255,255,.95)}
+  .ztoast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(20,24,31,.86);
+    color:#fff;font-size:12.5px;padding:9px 14px;border-radius:10px;z-index:99}
+</style></head>
+<body><div class="ph"><div class="scr" id="scr"></div></div>
+<script>
+const I = {
+  chat:'<path d="M4.6 7.4A2.9 2.9 0 0 1 7.5 4.5h9a2.9 2.9 0 0 1 2.9 2.9v6a2.9 2.9 0 0 1-2.9 2.9h-5.1L5.8 19.8v-3.5a2.9 2.9 0 0 1-1.2-2.4z"/>',
+  chatf:'<path d="M4.6 7.4A2.9 2.9 0 0 1 7.5 4.5h9a2.9 2.9 0 0 1 2.9 2.9v6a2.9 2.9 0 0 1-2.9 2.9h-5.1L5.8 19.8v-3.5a2.9 2.9 0 0 1-1.2-2.4z" fill="currentColor"/>',
+  people:'<circle cx="9.3" cy="8.8" r="3.6"/><path d="M3.3 19.5a6 6 0 0 1 12 0"/><path d="M16.4 6.1a3.6 3.6 0 0 1 0 6.6"/><path d="M17.9 19.5a5.9 5.9 0 0 0-1.6-4.1"/>',
+  peoplef:'<circle cx="9.3" cy="8.8" r="3.7"/><path d="M3.1 19.6a6.2 6.2 0 0 1 12.4 0z" fill="currentColor"/><circle cx="17.4" cy="9.4" r="2.9" fill="currentColor"/><path d="M15.1 19.6a6.2 6.2 0 0 0-1-3.5 4.6 4.6 0 0 1 6.4 3.5z" fill="currentColor"/>',
+  me:'<circle cx="12" cy="8.4" r="3.9"/><path d="M4.4 20.2a7.6 7.6 0 0 1 15.2 0"/>',
+  mef:'<circle cx="12" cy="8.3" r="4" fill="currentColor"/><path d="M4 20.6a8 8 0 0 1 16 0z" fill="currentColor"/>',
+  phone:'<path d="M6.6 3.8h2.9l1.6 4-2 1.4a12.4 12.4 0 0 0 5.7 5.7l1.4-2 4 1.6v2.9a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 6a2 2 0 0 1 2-2.2z"/>',
+  video:'<rect x="2.8" y="6.4" width="12.6" height="11.2" rx="2.7"/><path d="M15.4 11l5.8-3.4v8.8L15.4 13z"/>',
+  search:'<circle cx="10.9" cy="10.9" r="6.3"/><path d="M19.7 19.7l-4.1-4.1"/>',
+  more:'<circle cx="5.8" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="18.2" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
+  plusc:'<circle cx="12" cy="12" r="9" stroke-width="1.5"/><path d="M12 8.4v7.2M8.4 12h7.2" stroke-width="1.5"/>',
+  plus:'<path d="M12 5.5v13M5.5 12h13"/>',
+  back:'<path d="M14.8 5.4L8.2 12l6.6 6.6"/>',
+  chev:'<path d="M9.6 5.6L16 12l-6.4 6.4"/>',
+  bell:'<path d="M6.4 16.7V11a5.6 5.6 0 0 1 11.2 0v5.7l1.5 2H4.9z"/><path d="M10 20.4a2.2 2.2 0 0 0 4 0"/>',
+  bellslash:'<path d="M6.4 16.7V11a5.6 5.6 0 0 1 11.2 0v5.7l1.5 2H4.9z"/><path d="M10 20.4a2.2 2.2 0 0 0 4 0"/><path d="M4 4l16 16"/>',
+  shield:'<path d="M12 3.5l7 2.6v5.8c0 4-3 6.7-7 8.6-4-1.9-7-4.6-7-8.6V6.1z"/><path d="M9.3 11.8l2 2 3.4-3.6"/>',
+  lock:'<rect x="4.9" y="10.5" width="14.2" height="9.9" rx="3"/><path d="M8.5 10.5V7.9a3.5 3.5 0 0 1 7 0v2.6"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3.4v2.3M12 18.3v2.3M3.4 12h2.3M18.3 12h2.3M5.9 5.9l1.6 1.6M16.5 16.5l1.6 1.6M18.1 5.9l-1.6 1.6M7.5 16.5l-1.6 1.6"/>',
+  moon:'<path d="M20.2 14.4A8.6 8.6 0 1 1 9.6 3.8a7 7 0 0 0 10.6 10.6z"/>',
+  globe:'<circle cx="12" cy="12" r="8.8"/><path d="M3.3 12h17.4M12 3.1c2.4 2.2 3.6 5.3 3.6 8.9s-1.2 6.7-3.6 8.9C9.6 18.7 8.4 15.6 8.4 12S9.6 5.3 12 3.1z"/>',
+  help:'<circle cx="12" cy="12" r="8.8"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1.1.9-1.1 1.6v.4M12 16.5h.01"/>',
+  info:'<circle cx="12" cy="12" r="8.8"/><path d="M12 10.8v5.7M12 7.7h.01"/>',
+  mic:'<rect x="9.2" y="3.1" width="5.6" height="10.8" rx="2.8"/><path d="M5.8 11.4a6.2 6.2 0 0 0 12.4 0M12 17.6v3"/>',
+  smile:'<circle cx="12" cy="12" r="8.8"/><path d="M8.5 14.3a4.6 4.6 0 0 0 7 0"/><circle cx="9.3" cy="9.7" r=".9" fill="currentColor" stroke="none"/><circle cx="14.7" cy="9.7" r=".9" fill="currentColor" stroke="none"/>',
+  play:'<path d="M8.6 6.2l9 5.8-9 5.8z" fill="currentColor" stroke="none"/>',
+  file:'<path d="M13.6 4.5H7A2.5 2.5 0 0 0 4.5 7v10A2.5 2.5 0 0 0 7 19.5h10A2.5 2.5 0 0 0 19.5 17v-6.6"/><path d="M14.6 4.5h4.9v4.9"/><path d="M19.5 4.5l-8 8"/>',
+  fire:'<path d="M12 3.2s5.6 4.4 5.6 9.2a5.6 5.6 0 0 1-11.2 0c0-2 1-3.6 2-4.8.2 1.2.8 2 1.7 2.4-.4-2.6.3-5 1.9-6.8z"/>',
+  pin:'<path d="M12 20.6s5.4-4.6 5.4-8.8a5.4 5.4 0 1 0-10.8 0c0 4.2 5.4 8.8 5.4 8.8z"/><circle cx="12" cy="11.6" r="1.9"/>',
+  check:'<path d="M4.6 12.6l4.9 4.9L19.4 7.6"/>',
+  checkc:'<circle cx="12" cy="12" r="8.6" stroke-width="1.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5" stroke-width="1.7"/>',
+  qr:'<rect x="3.6" y="3.6" width="6.4" height="6.4" rx="1.6"/><rect x="14" y="3.6" width="6.4" height="6.4" rx="1.6"/><rect x="3.6" y="14" width="6.4" height="6.4" rx="1.6"/><path d="M14 14h2.6v2.6H14zM17.8 17.8h2.6v2.6h-2.6z"/>',
+  scan:'<path d="M4 9V6.4A2.4 2.4 0 0 1 6.4 4H9M15 4h2.6A2.4 2.4 0 0 1 20 6.4V9M20 15v2.6A2.4 2.4 0 0 1 17.6 20H15M9 20H6.4A2.4 2.4 0 0 1 4 17.6V15M3.6 12h16.8"/>',
+  addp:'<circle cx="9.8" cy="9" r="3.5"/><path d="M4.4 19.5a5.6 5.6 0 0 1 11 0"/><path d="M18.4 7.2v5.6M15.6 10h5.6"/>',
+  // 新建群聊：两个人（原来跟"添加好友"画得一模一样，用户指出来了）
+  groupadd:'<circle cx="8.8" cy="8.5" r="3.2"/><path d="M3.2 19a5.8 5.8 0 0 1 11.2 0"/><circle cx="16.9" cy="9.7" r="2.4"/><path d="M15 18.9a4.7 4.7 0 0 1 6.4-4.1"/>',
+  text:'<path d="M5 7h14M5 12h9M5 17h11"/>',
+  calendar:'<rect x="3.8" y="5.4" width="16.4" height="14.8" rx="3"/><path d="M3.8 10h16.4M8.4 3.4v4M15.6 3.4v4"/>',
+  video2:'<path d="M3.4 8.4A2.6 2.6 0 0 1 6 5.8h7.4a2.6 2.6 0 0 1 2.6 2.6v7.2a2.6 2.6 0 0 1-2.6 2.6H6a2.6 2.6 0 0 1-2.6-2.6z"/><path d="M16 12l4.6-3v6l-4.6-3z"/>',
+  folder:'<path d="M3.6 7.6A2.4 2.4 0 0 1 6 5.2h3.1l1.8 2.2H18a2.4 2.4 0 0 1 2.4 2.4v6.4A2.4 2.4 0 0 1 18 18.6H6a2.4 2.4 0 0 1-2.4-2.4z"/>',
+  eye:'<path d="M2.6 12S6 6.6 12 6.6 21.4 12 21.4 12 18 17.4 12 17.4 2.6 12 2.6 12z"/><circle cx="12" cy="12" r="2.8"/>'
+  /* v7 新增（加号面板 / 扫一扫 用）：图片 / 相机 / 名片 / 喇叭 */
+  ,
+  image:'<rect x="3.6" y="4.8" width="16.8" height="14.4" rx="3"/><circle cx="9.2" cy="10" r="1.7"/><path d="M4.4 17.6l4.2-3.9 3.2 2.9 2.5-2.2 4.9 4.4"/>',
+  cam:'<path d="M3.6 9.4A2.8 2.8 0 0 1 6.4 6.6h1.3l1.2-2h6.2l1.2 2h1.3a2.8 2.8 0 0 1 2.8 2.8v7a2.8 2.8 0 0 1-2.8 2.8H6.4a2.8 2.8 0 0 1-2.8-2.8z"/><circle cx="12" cy="12.9" r="3.3"/>',
+  card:'<rect x="3.4" y="5.8" width="17.2" height="12.4" rx="2.6"/><circle cx="9.4" cy="11.2" r="1.9"/><path d="M6.4 15.6a3.4 3.4 0 0 1 6 0M15.4 11h3.2M15.4 14.2h2.2"/>',
+  mega:'<path d="M4.6 10.2v3.6a1.8 1.8 0 0 0 1.8 1.8h1.1l7.7 3.7V4.7L7.5 8.4H6.4a1.8 1.8 0 0 0-1.8 1.8z"/><path d="M17.8 9.4a3.6 3.6 0 0 1 0 5.2"/>'
+};
+const S = (id, cls) => `<svg class="ico ${cls||''}" viewBox="0 0 24 24">${I[id]}</svg>`;
+const status = () => `<div class="st"><span>9:41</span><span class="r">
+  <svg width="15" height="10" viewBox="0 0 18 11" fill="currentColor"><rect x="0" y="7.4" width="3" height="3.6" rx="1"/><rect x="4.8" y="5.4" width="3" height="5.6" rx="1"/><rect x="9.6" y="3" width="3" height="8" rx="1"/><rect x="14.4" y=".6" width="3" height="10.4" rx="1"/></svg>
+  <svg width="14" height="10" viewBox="0 0 17 11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M1.4 3.8a10.4 10.4 0 0 1 14.2 0M4.1 6.5a6.6 6.6 0 0 1 8.8 0M6.9 9.2a2.8 2.8 0 0 1 3.2 0"/></svg>
+  <svg width="20" height="10" viewBox="0 0 26 12" fill="none"><rect x=".6" y=".6" width="22" height="10.8" rx="3.2" stroke="currentColor" opacity=".38"/><rect x="2.4" y="2.4" width="16.4" height="7.2" rx="1.8" fill="currentColor"/><path d="M24.2 4.4v3.2a1.9 1.9 0 0 0 0-3.2z" fill="currentColor" opacity=".38"/></svg>
+</span></div>`;
+const wrap = inner => `<div class="ph"><div class="scr"><div class="island"></div>${inner}<div class="home"></div></div></div>`;
+
+/* BB鸡 官方 logo */
+const logo = (size, r) => `<svg width="${size}" height="${size}" viewBox="0 0 512 512"
+  style="border-radius:${r==null?Math.round(size*0.24):r}px;display:block;flex:none">
+  <defs><linearGradient id="lg${size}" x1="0" y1="0" x2=".85" y2="1">
+    <stop offset="0" stop-color="#5CB0FF"/><stop offset="1" stop-color="#0A63C8"/></linearGradient></defs>
+  <rect width="512" height="512" rx="118" fill="url(#lg${size})"/>
+  <path d="M104 216 a62 62 0 0 0 0 80" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" opacity=".5"/>
+  <path d="M408 216 a62 62 0 0 1 0 80" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" opacity=".5"/>
+  <circle cx="256" cy="124" r="19" fill="#fff"/>
+  <path d="M164 300 V262 a92 92 0 0 1 184 0 V300 Z" fill="#fff"/>
+  <rect x="136" y="294" width="240" height="36" rx="18" fill="#fff"/>
+  <circle cx="256" cy="356" r="26" fill="#FFC24D"/></svg>`;
+
+/* BB鸡 内置头像 a01–a29 */
+const A = {
+  xiang:'assets/av01.jpg', wang:'assets/av05.jpg', alex:'assets/av06.jpg',
+  xing:'assets/av10.jpg', grpAll:'assets/av13.jpg', zhao:'assets/av14.jpg',
+  prod:'assets/av15.jpg', test:'assets/av16.jpg', yufang:'assets/av17.jpg',
+  design:'assets/av18.jpg', liming:'assets/av19.jpg', zhang:'assets/av20.jpg',
+  ph1:'assets/ph_chat.jpg', ph2:'assets/ph_grp.jpg'
+};
+const G = ['assets/ph_g1.jpg','assets/ph_g2.jpg','assets/ph_g3.jpg','assets/ph_g4.jpg','assets/ph_g5.jpg',
+  'assets/ph_g6.jpg','assets/ph_g7.jpg','assets/ph_g8.jpg','assets/ph_g9.jpg',
+  'assets/ph_g10.jpg','assets/ph_g11.jpg','assets/ph_g12.jpg'];
+const im = (src,cls) => `<img class="av ${cls||'n'}" src="${src}" alt="">`;
+/* v6：头像 + 在线绿点（on=1 亮头像带绿点；on=0 灰头像）
+   用法 avon(头像, 尺寸类, 在线吗) */
+const avon = (src, cls, on) => `<span class="avw">${im(src, (cls || 'n') + (on ? '' : ' off'))}${on ? '<span class="ondot"></span>' : ''}</span>`;
+const wave = n => Array.from({length:n},(_,i)=>`<i style="height:${[6,11,15,8,13,17,9,14,7,16,12,8][i%12]}px"></i>`).join('');
+
+const tabs = on => `<div class="tab">
+  <div class="${on===0?'on':''}">${S(on===0?'chatf':'chat')}消息</div>
+  <div class="${on===1?'on':''}">${S(on===1?'peoplef':'people')}通讯录</div>
+  <div class="${on===2?'on':''}">${S(on===2?'mef':'me')}我</div></div>`;
+
+
+
+/* ==================================================================
+   真界面层：数据从原生来（window.BB.set），操作回原生（webkit.messageHandlers.bb）
+   ================================================================== */
+const ST = { tab: 0, cid: 0, me: {}, people: {}, friends: [], groups: [], convs: [], msgs: {}, reqs: [] };
+
+function post(o) {
+  try { window.webkit.messageHandlers.bb.postMessage(o); }
+  catch (e) { console.log('[to native] ' + JSON.stringify(o)); }
+}
+const esc2 = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const tshort = (ts) => {
+  if (!ts) return '';
+  const d = new Date(ts), n = new Date();
+  const same = d.toDateString() === n.toDateString();
+  if (same) return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  const y = new Date(n.getTime() - 86400000);
+  if (d.toDateString() === y.toDateString()) return '昨天';
+  return (d.getMonth() + 1) + '-' + d.getDate();
+};
+
+/* 头像：有自定义头像用图，否则渐变圆 + 首字；在线右下角绿点，离线去色 */
+function ava(id, name, size, online) {
+  const p = ST.people[id] || {};
+  const img = p.avatar ? '<img src="' + esc2(p.avatar) + '" alt="">' : '';
+  const cls = 'zav' + (online === false ? ' off' : '');
+  return '<span class="' + cls + '" style="width:' + size + 'px;height:' + size + 'px">' +
+    '<span class="zic" style="background:' + gradOf(name) + ';font-size:' + Math.round(size * 0.4) + 'px">' + esc2(String(name || '?').slice(0, 1)) + '</span>' +
+    img + (online === true ? '<i class="zod"></i>' : '') + '</span>';
+}
+function gradOf(name) {
+  let h = 0; for (const u of String(name || '?')) h = (h * 31 + u.codePointAt(0)) % 360;
+  return 'linear-gradient(140deg,hsl(' + h + ' 62% 72%),hsl(' + h + ' 62% 56%))';
+}
+
+/* 底部标签栏 */
+function tabbar() {
+  const t = [['消息', 'chat'], ['通讯录', 'people'], ['我', 'me']];
+  return '<div class="tab">' + t.map((x, i) =>
+    '<div class="' + (ST.tab === i ? 'on' : '') + '" data-tab="' + i + '">' +
+    S(ST.tab === i ? x[1] + 'f' : x[1], '') + '<span>' + x[0] + '</span></div>').join('') + '</div>';
+}
+
+/* 06 消息列表 */
+function screenList() {
+  if (!ST.convs.length) {
+    return '<div class="ltitle"><h1>消息</h1></div>' +
+      '<div style="flex:1;display:grid;place-items:center;font-size:12.5px;color:#8A93A0">还没有聊天</div>' + tabbar();
+  }
+  return '<div class="ltitle"><h1>消息</h1><span class="r" data-act="add">' + S('plusc', 'xl') + '</span></div>' +
+    '<div class="srch">' + S('search', 's') + '搜索聊天、联系人、消息</div>' +
+    '<div class="plainlist">' + ST.convs.map((c) => {
+      const p = ST.people[c.id] || {};
+      const isG = c.id === 'all' || String(c.id).startsWith('g');
+      return '<div class="li' + (c.pinned ? ' pin' : '') + '" data-cid="' + esc2(c.id) + '">' +
+        ava(c.id, c.name, 46, isG ? null : p.online) +
+        '<div class="tx"><div class="nm">' + (c.pinned ? '<span class="pinmark">' + S('pin', 's') + '</span>' : '') + esc2(c.name) + '</div>' +
+        '<div class="pv">' + esc2(c.text) + '</div></div>' +
+        '<div class="rt"><span class="tm">' + tshort(c.ts) + '</span>' +
+        (c.unread ? '<span class="bdg">' + c.unread + '</span>' : '') + '</div></div>';
+    }).join('') + '</div>' + tabbar();
+}
+
+/* 12 单聊 / 群聊 */
+function screenChat() {
+  const c = ST.convs.find((x) => x.id === ST.cid) || { id: ST.cid, name: '' };
+  const isG = c.id === 'all' || String(c.id).startsWith('g');
+  const p = ST.people[c.id] || {};
+  const list = ST.msgs[c.id] || [];
+  return '<div class="navbar"><span class="back" data-act="back">' + S('back') + '</span>' +
+    ava(c.id, c.name, 30, isG ? null : p.online) +
+    '<div class="nt"><div class="n">' + esc2(c.name) + '</div>' +
+    (isG ? '' : '<div class="s">' + (p.online ? '在线' : '不在线') + '</div>') + '</div>' +
+    '<div class="rs">' + (isG ? S('more') : S('phone') + S('video')) + '</div></div>' +
+    '<div class="chat" id="chatbox">' + list.map((m) => {
+      if (m.recalled) return '<div class="sysmsg">撤回了一条消息</div>';
+      const mine = m.from === ST.me.id;
+      const body = m.kind === 'image'
+        ? (m.src ? '<div class="b pic"><img src="' + esc2(m.src) + '" alt=""></div>' : '<div class="b">[图片]</div>')
+        : '<div class="b' + (mine ? ' m' : '') + '">' + esc2(m.text).replace(/\n/g, '<br>') + '</div>';
+      return '<div class="ln' + (mine ? ' me' : '') + '">' + (mine ? '' : ava(c.id, c.name, 24, null)) + body + '</div>';
+    }).join('') + '</div>' +
+    '<div class="cbar"><span class="pl">' + S('mic', 'l') + '</span>' +
+    '<div class="fld" id="inp" contenteditable="true" data-ph="输入消息"></div>' +
+    '<span class="pl" data-act="send">' + S('plusc', 'l') + '</span></div>';
+}
+
+function render() {
+  const scr = document.getElementById('scr');
+  scr.innerHTML = (ST.cid ? screenChat() : (ST.tab === 0 ? screenList() : (ST.tab === 1 ? screenContacts() : screenMe()))) + '';
+  const box = document.getElementById('chatbox');
+  if (box) box.scrollTop = box.scrollHeight;
+}
+
+/* 09 通讯录（先简版，下一轮细化） */
+function screenContacts() {
+  return '<div class="ltitle"><h1>通讯录</h1><span class="r" data-tab="4">' + S('addp', 'l') + '</span></div>' +
+    '<div class="srch">' + S('search', 's') + '搜索联系人</div>' +
+    '<div class="grp"><div class="row ic"><span class="ic c3">' + S('people', 's') + '</span>新的朋友' +
+    (ST.reqs.length ? '<span class="v">' + ST.reqs.length + ' 条请求</span>' : '') + '<span class="ch">' + S('chev', 's') + '</span></div>' +
+    '<div class="row ic"><span class="ic c5">' + S('chat', 's') + '</span>群聊<span class="v">' + ST.groups.length + ' 个</span><span class="ch">' + S('chev', 's') + '</span></div></div>' +
+    '<div class="ghead">好友 · ' + ST.friends.length + '</div>' +
+    '<div class="grp">' + ST.friends.map((f) => '<div class="row tall" data-uid="' + esc2(f.id) + '">' +
+      ava(f.id, f.name, 34, f.online) + '<span style="font-size:12.5px;font-weight:500">' + esc2(f.name) + '</span></div>').join('') + '</div>' +
+    tabbar();
+}
+
+/* 11 我 */
+function screenMe() {
+  return '<div class="ltitle"><h1>我</h1></div>' +
+    '<div class="grp"><div class="row tall" style="display:block;text-align:center;padding:18px 16px 16px">' +
+    ava(ST.me.id, ST.me.name || '我', 84, null) +
+    '<div style="font-size:16px;font-weight:600;letter-spacing:-.3px;margin-top:11px">' + esc2(ST.me.name || '—') + '</div>' +
+    '<div style="font-size:11px;color:#8A93A0;margin-top:4px">BB鸡号 ' + esc2(ST.me.bbjiId || '') + '</div></div></div>' +
+    '<div class="grp"><div class="row ic"><span class="ic c4">' + S('me', 's') + '</span>我的资料<span class="ch">' + S('chev', 's') + '</span></div>' +
+    '<div class="row ic"><span class="ic c3">' + S('qr', 's') + '</span>我的二维码<span class="ch">' + S('chev', 's') + '</span></div></div>' +
+    '<div class="grp"><div class="row ic"><span class="ic c1">' + S('gear', 's') + '</span>设置<span class="ch">' + S('chev', 's') + '</span></div></div>' +
+    tabbar();
+}
+
+/* 点击（事件委托） */
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab],[data-cid],[data-act],[data-uid]');
+  if (!t) return;
+  if (t.dataset.tab != null) { ST.tab = Number(t.dataset.tab); ST.cid = 0; render(); return; }
+  if (t.dataset.cid != null) { ST.cid = t.dataset.cid; post({ op: 'open', cid: ST.cid }); render(); return; }
+  if (t.dataset.uid != null) { post({ op: 'profile', uid: t.dataset.uid }); return; }
+  const a = t.dataset.act;
+  if (a === 'back') { ST.cid = 0; render(); return; }
+  if (a === 'send') {
+    const box = document.getElementById('inp');
+    const text = (box.textContent || '').trim();
+    if (text) { post({ op: 'send', cid: ST.cid, text }); box.textContent = ''; }
+    return;
+  }
+  if (a === 'add') { post({ op: 'addFriend' }); return; }
+});
+
+/* 原生 → 页面：把最新数据丢进来重画 */
+window.BB = {
+  set(json) {
+    const d = typeof json === 'string' ? JSON.parse(json) : json;
+    Object.assign(ST, d);
+    render();
+  },
+  toast(msg) {
+    const el = document.createElement('div');
+    el.className = 'ztoast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1600);
+  },
+};
+
+/* 本机预览（没有 webkit 桥时）灌一份假数据，方便截图对比效果图 */
+if (!window.webkit) {
+  const t = Date.now();
+  window.BB.set({
+    me: { id: 'u1', name: '象象', bbjiId: 'xiangxiang' },
+    people: { u1: { name: '象象', online: true }, u2: { name: '象象', online: true }, u3: { name: '星皓', online: false } },
+    convs: [
+      { id: 'u2', name: '象象', text: '好的，收到！😊', ts: t - 60000, unread: 3, pinned: true },
+      { id: 'g1', name: '测试群', text: '老王：今晚一起吃饭吧～', ts: t - 90000, unread: 12 },
+      { id: 'u3', name: '星皓', text: '这个方案不错，赞！', ts: t - 120000 },
+    ],
+    msgs: {
+      u2: [
+        { id: 'm1', from: 'u2', text: '今天天气真好呀 🌞', ts: t - 300000, kind: 'text' },
+        { id: 'm2', from: 'u1', text: '是啊！\n周末一起去逛街吧？😊', ts: t - 240000, kind: 'text' },
+        { id: 'm3', from: 'u2', text: '照片你看完就没了', ts: t - 120000, kind: 'text' },
+      ],
+    },
+  });
+}
+
+</script></body></html>

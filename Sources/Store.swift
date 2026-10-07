@@ -464,6 +464,42 @@ final class Store: ObservableObject {
     func fileURL(_ fid: String) -> URL? {
         URL(string: "https://bbji.xkmd.cn/api/file/\(fid)?t=\(token)")
     }
+
+    /// 塞给网页（B 方案）的那份 JSON：会话 / 消息 / 好友 / 群 / 我
+    func webPayload() -> String {
+        func av(_ p: Person) -> String {
+            if p.avatar.isEmpty { return "" }
+            if p.avatar.hasPrefix("http") { return p.avatar }
+            return fileURL(p.avatar)?.absoluteString ?? ""
+        }
+        var peopleOut: [String: [String: Any]] = [:]
+        for (k, p) in people {
+            peopleOut[k] = ["name": p.display, "online": p.online, "avatar": av(p)]
+        }
+        let convsOut = convs.map { c -> [String: Any] in
+            ["id": c.id, "name": c.name, "text": c.text, "ts": c.ts, "unread": c.unread, "pinned": c.pinned]
+        }
+        var msgsOut: [String: [[String: Any]]] = [:]
+        for c in convs {
+            msgsOut[c.id] = thread(c.id).map { m -> [String: Any] in
+                var o: [String: Any] = ["id": m.id, "from": m.from, "text": m.text,
+                                        "ts": m.ts, "kind": m.kind, "recalled": m.recalled]
+                if let f = m.fileId, let u = fileURL(f) { o["src"] = u.absoluteString }
+                return o
+            }
+        }
+        let obj: [String: Any] = [
+            "me": ["id": meUserId, "name": meName.isEmpty ? "我" : meName, "bbjiId": meId, "avatar": myAvatar],
+            "people": peopleOut,
+            "friends": friends.map { ["id": $0.id, "name": $0.display, "online": $0.online] },
+            "groups": groups.map { ["id": $0.id, "name": $0.name, "members": $0.members.count] },
+            "convs": convsOut,
+            "msgs": msgsOut,
+            "reqs": reqs.filter { !$0.outgoing && $0.state == "pending" }.map { ["id": $0.userId] },
+        ]
+        return (try? JSONSerialization.data(withJSONObject: obj))
+            .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+    }
 }
 
 /* 时间显示：今天 HH:mm / 昨天 / 月-日 */
