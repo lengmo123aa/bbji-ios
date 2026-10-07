@@ -188,14 +188,16 @@ struct ChatListPage: View {
     }
 
     private var empty: some View {
-        VStack(spacing: 8) {
-            Text(q.isEmpty ? (store.connected ? "还没有聊天" : "连接中…") : "没找到")
-                .font(.system(size: 15, weight: .semibold)).foregroundColor(T.ink)
-            Text(q.isEmpty ? "在电脑端先跟人聊两句，这边就会出现" : "换个词试试")
-                .font(.system(size: 12)).foregroundColor(T.sec2)
+        VStack(spacing: 0) {
+            VStack(spacing: 8) {
+                Text(q.isEmpty ? (store.connected ? "还没有聊天" : "连接中…") : "没找到")
+                    .font(.system(size: 15, weight: .semibold)).foregroundColor(T.ink)
+                Text(q.isEmpty ? "在电脑端先跟人聊两句，这边就会出现" : "换个词试试")
+                    .font(.system(size: 12)).foregroundColor(T.sec2)
+            }
+            .frame(maxWidth: .infinity).padding(.top, 90)
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity).padding(.top, 90)
-        Spacer(minLength: 0)
     }
 }
 
