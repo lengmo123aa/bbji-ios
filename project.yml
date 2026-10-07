@@ -4,12 +4,12 @@ name: BBji
 options:
   bundleIdPrefix: cn.xkmd
   deploymentTarget:
-    iOS: "15.0"          # 你的机器是 iOS 16，定 15 兼容更广
+    iOS: "16.0"          # 0.0.2 起定 16（要用 PhotosPicker / 新版列表），你的机器就是 iOS 16
   createIntermediateGroups: true
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
     ENABLE_BITCODE: NO
     DEVELOPMENT_TEAM: ""          # 不签名：CI 里用 CODE_SIGNING_ALLOWED=NO
 targets:

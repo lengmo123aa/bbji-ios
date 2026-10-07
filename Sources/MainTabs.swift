@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 /// M1 第一块：消息 / 通讯录 / 我 —— 数据全是真的（走 wss://bbji.xkmd.cn）。
 struct MainTabs: View {
@@ -72,6 +73,31 @@ struct ChatListView: View {
                                 ConRow(c: c)
                             }
                             .listRowBackground(Color.white.opacity(0.6))
+                            /* 07 左滑：置顶 / 免打扰 / 删除 */
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) { store.hideConv(c.id) } label: {
+                                    Label("删除", systemImage: "trash")
+                                }
+                                Button { store.toggleMute(c.id) } label: {
+                                    Label(store.muted.contains(c.id) ? "取消免打扰" : "免打扰", systemImage: "bell.slash")
+                                }.tint(.orange)
+                                Button { store.togglePin(c.id) } label: {
+                                    Label(store.pinned.contains(c.id) ? "取消置顶" : "置顶", systemImage: "pin")
+                                }.tint(.gray)
+                            }
+                            /* 08 长按：标为已读 / 置顶 / 免打扰 / 删除聊天 */
+                            .contextMenu {
+                                Button { store.markRead(c.id) } label: { Label("标为已读", systemImage: "checkmark.circle") }
+                                Button { store.togglePin(c.id) } label: {
+                                    Label(store.pinned.contains(c.id) ? "取消置顶" : "置顶聊天", systemImage: "pin")
+                                }
+                                Button { store.toggleMute(c.id) } label: {
+                                    Label(store.muted.contains(c.id) ? "取消免打扰" : "消息免打扰", systemImage: "bell.slash")
+                                }
+                                Button(role: .destructive) { store.hideConv(c.id) } label: {
+                                    Label("删除聊天", systemImage: "trash")
+                                }
+                            }
                         }
                     }
                     .listStyle(.plain)
@@ -94,13 +120,19 @@ private struct ConRow: View {
         HStack(spacing: 11) {
             Ava(name: c.name, size: 44, online: c.isGroup ? nil : c.online)
             VStack(alignment: .leading, spacing: 3) {
-                Text(c.name).font(.system(size: 14, weight: .semibold)).foregroundColor(T.ink)
+                HStack(spacing: 6) {
+                    if c.pinned { Image(systemName: "pin.fill").font(.system(size: 10)).foregroundColor(T.blue) }
+                    Text(c.name).font(.system(size: 14, weight: .semibold)).foregroundColor(T.ink)
+                }
                 Text(c.text).font(.system(size: 12)).foregroundColor(T.gray).lineLimit(1)
             }
             Spacer(minLength: 6)
             VStack(alignment: .trailing, spacing: 6) {
                 Text(timeText(c.ts)).font(.system(size: 11)).foregroundColor(Color(red: 0.72, green: 0.75, blue: 0.79))
-                if c.unread > 0 {
+                if c.muted {
+                    Image(systemName: "bell.slash.fill").font(.system(size: 11))
+                        .foregroundColor(Color(red: 0.72, green: 0.75, blue: 0.79))
+                } else if c.unread > 0 {
                     Text("\(c.unread)")
                         .font(.system(size: 11, weight: .semibold)).foregroundColor(.white)
                         .padding(.horizontal, 6).padding(.vertical, 2)
@@ -118,6 +150,8 @@ struct ChatScreen: View {
     let cid: String
     let isGroup: Bool
     @State private var draft = ""
+    @State private var pick: PhotosPickerItem? = nil
+    @State private var sending = false
 
     var body: some View {
         ZStack {
@@ -137,6 +171,10 @@ struct ChatScreen: View {
                     }
                 }
                 HStack(spacing: 8) {
+                    PhotosPicker(selection: $pick, matching: .images) {
+                        Image(systemName: sending ? "hourglass" : "photo.on.rectangle")
+                            .font(.system(size: 22)).foregroundColor(T.blue)
+                    }
                     TextField("输入消息", text: $draft)
                         .font(.system(size: 13.5))
                         .padding(.horizontal, 12).frame(height: 38)
@@ -157,24 +195,50 @@ struct ChatScreen: View {
         .navigationTitle(store.name(of: cid, isGroup: isGroup))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { store.markRead(cid) }
+        .onChange(of: pick) { item in
+            guard let item else { return }
+            sending = true
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self) {
+                    await store.sendImage(to: cid, data: data, name: "IMG_\(Int(Date().timeIntervalSince1970)).jpg")
+                }
+                sending = false
+                pick = nil
+            }
+        }
     }
 }
 
 private struct Bubble: View {
     let m: Msg
     let mine: Bool
+    @EnvironmentObject var store: Store
     var body: some View {
         HStack {
             if mine { Spacer(minLength: 40) }
-            Text(m.recalled ? "撤回了一条消息" : (m.text.isEmpty ? "[\(m.kind)]" : m.text))
-                .font(.system(size: 13.5))
-                .foregroundColor(mine ? .white : T.ink)
-                .padding(.horizontal, 12).padding(.vertical, 9)
-                .background(mine
-                            ? AnyView(LinearGradient(colors: [T.blueLight, T.blue], startPoint: .top, endPoint: .bottom))
-                            : AnyView(Color.white.opacity(0.92)))
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .opacity(m.recalled ? 0.6 : 1)
+            if m.kind == "image", let fid = m.fileId, let u = store.fileURL(fid) {
+                AsyncImage(url: u) { ph in
+                    if let img = ph.image {
+                        img.resizable().scaledToFill()
+                            .frame(maxWidth: 210, maxHeight: 240)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    } else {
+                        RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.7))
+                            .frame(width: 150, height: 150)
+                            .overlay(ProgressView())
+                    }
+                }
+            } else {
+                Text(m.recalled ? "撤回了一条消息" : (m.text.isEmpty ? "[\(m.kind)]" : m.text))
+                    .font(.system(size: 13.5))
+                    .foregroundColor(mine ? .white : T.ink)
+                    .padding(.horizontal, 12).padding(.vertical, 9)
+                    .background(mine
+                                ? AnyView(LinearGradient(colors: [T.blueLight, T.blue], startPoint: .top, endPoint: .bottom))
+                                : AnyView(Color.white.opacity(0.92)))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .opacity(m.recalled ? 0.6 : 1)
+            }
             if !mine { Spacer(minLength: 40) }
         }
     }

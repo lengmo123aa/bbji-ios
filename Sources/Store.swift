@@ -36,6 +36,7 @@ struct Msg: Identifiable, Equatable {
     var kind: String = "text"
     var recalled: Bool = false
     var read: Int = 0
+    var fileId: String? = nil
 }
 
 /// 会话（消息列表里的一行）
@@ -47,6 +48,8 @@ struct Conv: Identifiable {
     var unread: Int
     var isGroup: Bool
     var online: Bool
+    var pinned: Bool = false
+    var muted: Bool = false
 }
 
 @MainActor
@@ -58,6 +61,9 @@ final class Store: ObservableObject {
     @Published var allIn = false
     @Published var msgs: [Msg] = []
     @Published var lastRead: [String: Double] = [:]
+    @Published var pinned: [String] = []      // 置顶（本机存的，跟电脑端一样是本地状态）
+    @Published var muted: [String] = []       // 免打扰
+    @Published var hidden: [String] = []      // 删掉的会话（本机不再显示）
     @Published var meName = ""
     @Published var meId = ""
 
@@ -73,6 +79,7 @@ final class Store: ObservableObject {
     func connect(token: String, onFail: (() -> Void)? = nil) {
         self.token = token
         self.onAuthFail = onFail
+        loadLocalSets()
         guard !token.isEmpty else { return }
         if let t = task { t.cancel(with: .goingAway, reason: nil) }
         let t = URLSession.shared.webSocketTask(with: wsURL)
@@ -206,12 +213,14 @@ final class Store: ObservableObject {
 
     private func msgOf(_ m: [String: Any]) -> Msg? {
         guard let id = m["id"] as? String, let from = m["from"] as? String, let to = m["to"] as? String else { return nil }
-        return Msg(id: id, from: from, to: to,
+        var msg = Msg(id: id, from: from, to: to,
                    text: (m["text"] as? String) ?? "",
                    ts: (m["ts"] as? Double) ?? 0,
                    kind: (m["kind"] as? String) ?? "text",
                    recalled: (m["recalled"] as? Bool) ?? false,
                    read: (m["read"] as? Int) ?? 0)
+        msg.fileId = m["file"] as? String
+        return msg
     }
 
     /* ---------- 发消息 ---------- */
@@ -232,6 +241,7 @@ final class Store: ObservableObject {
             let isGroup = m.to == "all" || m.to.hasPrefix("g")
             let cid = isGroup ? m.to : (m.from == meUserId ? m.to : m.from)
             guard !cid.isEmpty else { continue }
+            if hidden.contains(cid) { continue }
             var c = map[cid] ?? Conv(id: cid, name: name(of: cid, isGroup: isGroup), text: "",
                                      ts: 0, unread: 0, isGroup: isGroup, online: false)
             if m.ts >= c.ts {
@@ -241,9 +251,15 @@ final class Store: ObservableObject {
             if m.from != meUserId, m.ts > (lastRead[cid] ?? 0) { c.unread += 1 }
             c.online = people[cid]?.online ?? false
             c.name = name(of: cid, isGroup: isGroup)
+            c.pinned = pinned.contains(cid)
+            c.muted = muted.contains(cid)
             map[cid] = c
         }
-        return map.values.sorted { $0.ts > $1.ts }
+        return map.values.sorted { a, b in
+            let pa = pinned.contains(a.id), pb = pinned.contains(b.id)
+            if pa != pb { return pa }
+            return a.ts > b.ts
+        }
     }
 
     func name(of id: String, isGroup: Bool) -> String {
@@ -269,6 +285,59 @@ final class Store: ObservableObject {
 
     private func loadRead() {
         if let d = UserDefaults.standard.dictionary(forKey: "bbji_lastread") as? [String: Double] { lastRead = d }
+    }
+
+    /* ---------- 置顶 / 免打扰 / 删除（本地） ---------- */
+    func togglePin(_ id: String) {
+        if let i = pinned.firstIndex(of: id) { pinned.remove(at: i) } else { pinned.insert(id, at: 0) }
+        UserDefaults.standard.set(pinned, forKey: "bbji_pin")
+    }
+    func toggleMute(_ id: String) {
+        if let i = muted.firstIndex(of: id) { muted.remove(at: i) } else { muted.append(id) }
+        UserDefaults.standard.set(muted, forKey: "bbji_mute")
+    }
+    func hideConv(_ id: String) {
+        if !hidden.contains(id) { hidden.append(id) }
+        UserDefaults.standard.set(hidden, forKey: "bbji_hidden")
+    }
+    func loadLocalSets() {
+        pinned = UserDefaults.standard.stringArray(forKey: "bbji_pin") ?? []
+        muted = UserDefaults.standard.stringArray(forKey: "bbji_mute") ?? []
+        hidden = UserDefaults.standard.stringArray(forKey: "bbji_hidden") ?? []
+    }
+
+    /* ---------- 图片：上传 → 发一条 kind=image 的消息 ---------- */
+    func sendImage(to: String, data: Data, name: String) async {
+        let fid = await upload(data: data, name: name)
+        guard let id = fid else { return }
+        let cid = "c" + String(Int(Date().timeIntervalSince1970 * 1000))
+        var m = Msg(id: cid, from: meUserId, to: to, text: "", ts: Date().timeIntervalSince1970 * 1000, kind: "image")
+        m.fileId = id
+        msgs.append(m)
+        raw(["t": "send", "to": to, "text": "", "cid": cid, "kind": "image", "file": id])
+    }
+
+    /// POST /api/upload（原始体 + x-token / x-file-name 头）→ 返回服务端给的 file id
+    private func upload(data: Data, name: String) async -> String? {
+        guard let u = URL(string: "https://bbji.xkmd.cn/api/upload") else { return nil }
+        var req = URLRequest(url: u)
+        req.httpMethod = "POST"
+        req.setValue(token, forHTTPHeaderField: "x-token")
+        req.setValue(name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "pic.jpg",
+                     forHTTPHeaderField: "x-file-name")
+        req.setValue("application/octet-stream", forHTTPHeaderField: "content-type")
+        do {
+            let (d, _) = try await URLSession.shared.upload(for: req, from: data)
+            let o = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any]
+            if (o?["ok"] as? Bool) == true { return (o?["id"] as? String) ?? (o?["file"] as? String) }
+            print("[upload] 失败 " + (String(data: d, encoding: .utf8) ?? ""))
+        } catch { print("[upload] 出错 " + error.localizedDescription) }
+        return nil
+    }
+
+    /// 附件地址（跟电脑端一样带 token）
+    func fileURL(_ fid: String) -> URL? {
+        URL(string: "https://bbji.xkmd.cn/api/file/\(fid)?t=\(token)")
     }
 }
 
