@@ -761,15 +761,16 @@ struct ContactsPage: View {
                 VStack(spacing: 0) {
                     VStack(spacing: 0) {
                         NavigationLink(destination: NewFriendsView().environmentObject(store).navigationBarHidden(false)) {
-                            IconRow(icon: "person.badge.plus", color: Color(red: 0.475, green: 0.690, blue: 1.0),
-                                    title: "新的朋友", trailing: pendingCount > 0 ? "\(pendingCount)" : "")
+                            IconRow(icon: "person.badge.plus", color: Color(red: 0.941, green: 0.569, blue: 0.247),
+                                    title: "新的朋友",
+                                    trailing: pendingCount > 0 ? "\(pendingCount) 条请求" : "")
                         }.buttonStyle(.plain)
                         ForEach(store.groups) { g in
                             NavigationLink(destination: ChatScreen(cid: g.id, isGroup: true)
                                 .environmentObject(store)) {
                                 IconRow(icon: "bubble.left.and.bubble.right.fill",
                                         color: Color(red: 0.220, green: 0.780, blue: 0.349),
-                                        title: g.name, trailing: "\(g.members.count) 人")
+                                        title: g.name, trailing: "\(g.members.count) 个")
                             }.buttonStyle(.plain)
                         }
                     }
@@ -814,22 +815,37 @@ struct IconRow: View {
     let color: Color
     let title: String
     var trailing: String = ""
+    var sub: String = ""
+    var chev = true                       // 设计稿里这类行右边都有一颗 ›
     var body: some View {
         HStack(spacing: 11) {
             ZStack {
                 RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(LinearGradient(colors: [color.opacity(0.85), color], startPoint: .top, endPoint: .bottom))
+                    .fill(LinearGradient(colors: [color.opacity(0.88), color], startPoint: .top, endPoint: .bottom))
                     .frame(width: 22, height: 22)
                 Image(systemName: icon).font(.system(size: 11, weight: .semibold)).foregroundColor(.white)
             }
-            Text(title).font(.system(size: 13.5)).foregroundColor(T.ink)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 13.5)).foregroundColor(T.ink)
+                if !sub.isEmpty { Text(sub).font(.system(size: 10.5)).foregroundColor(T.sec2) }
+            }
             Spacer()
             if !trailing.isEmpty {
                 Text(trailing).font(.system(size: 11.5)).foregroundColor(T.sec2)
             }
+            if chev { Chev() }
         }
         .padding(.horizontal, 16).frame(height: 50)
         .contentShape(Rectangle())
+    }
+}
+
+/// 设计稿里那颗 ›（#CFD7E0，12/600）
+struct Chev: View {
+    var body: some View {
+        Image(systemName: "chevron.right")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundColor(Color(red: 0.812, green: 0.843, blue: 0.878))
     }
 }
 
@@ -890,6 +906,10 @@ struct MePage: View {
                         }
                     }
                     .glassCard().padding(.horizontal, 14)
+
+                    Text("版本 " + appVersionText())
+                        .font(.system(size: 10.5)).foregroundColor(T.ter2)
+                        .frame(maxWidth: .infinity).padding(.top, 14)
                 }
                 .padding(.bottom, 16)
             }

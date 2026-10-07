@@ -26,7 +26,7 @@ targets:
       properties:
         CFBundleDisplayName: BB鸡
         CFBundleShortVersionString: "0.0.2"
-        CFBundleVersion: "2"
+        CFBundleVersion: "3"
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -41,7 +41,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"        # 只做 iPhone
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon   # 0.0.2 起有真图标了（原来这里是空的，所以桌面上是白板）
         MARKETING_VERSION: "0.0.2"
-        CURRENT_PROJECT_VERSION: "2"
+        CURRENT_PROJECT_VERSION: "3"
         CODE_SIGN_IDENTITY: ""
         CODE_SIGNING_REQUIRED: NO
         CODE_SIGNING_ALLOWED: NO

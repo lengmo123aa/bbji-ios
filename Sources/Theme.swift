@@ -98,6 +98,14 @@ func bbFileURL(_ fid: String) -> URL? {
     return URL(string: "https://bbji.xkmd.cn/api/file/\(f)?t=\(t)")
 }
 
+/// 当前装的到底是哪一版（0.0.2 (3) 这样）—— 界面上写出来，省得"装上了没"靠猜
+func appVersionText() -> String {
+    let i = Bundle.main.infoDictionary
+    let v = (i?["CFBundleShortVersionString"] as? String) ?? "?"
+    let b = (i?["CFBundleVersion"] as? String) ?? "?"
+    return v + " (" + b + ")"
+}
+
 final class ImgStore {
     static let shared = ImgStore()
     private let cache = NSCache<NSURL, UIImage>()
@@ -116,6 +124,9 @@ final class ImgStore {
 struct NetImg: View {
     let url: URL?
     var fill: Bool = true
+    /// true = 还没加载出来（或者加载失败）时留空，让底下那层（字母头像）露出来。
+    /// 头像必须用这个：不然 QQ 头像一取不到，就变成一个灰疙瘩，比没有还难看。
+    var ghost: Bool = false
     @State private var img: UIImage?
 
     var body: some View {
@@ -123,6 +134,8 @@ struct NetImg: View {
             if let img {
                 Image(uiImage: img).resizable()
                     .aspectRatio(contentMode: fill ? .fill : .fit)
+            } else if ghost {
+                Color.clear
             } else {
                 Color(red: 0.906, green: 0.921, blue: 0.945)
             }
@@ -384,7 +397,7 @@ struct Ava: View {
                     .font(.system(size: size * 0.40, weight: .semibold))
                     .foregroundColor(.white)
                 if u != nil {
-                    NetImg(url: u).frame(width: size, height: size)
+                    NetImg(url: u, ghost: true).frame(width: size, height: size)
                 }
             }
             .frame(width: size, height: size)
