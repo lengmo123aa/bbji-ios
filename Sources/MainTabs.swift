@@ -202,6 +202,15 @@ struct ChatScreen: View {
         }
         .navigationTitle(store.name(of: cid, isGroup: isGroup))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if isGroup {
+                    NavigationLink(destination: GroupSettingsView(gid: cid).environmentObject(store)) {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                }
+            }
+        }
         .onAppear { store.markRead(cid) }
         .onChange(of: pick) { item in
             guard let item else { return }

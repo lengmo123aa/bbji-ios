@@ -334,6 +334,22 @@ final class Store: ObservableObject {
     func setRemark(id: String, remark: String) { raw(["t": "friend_remark", "id": id, "remark": remark]) }
     func delFriend(id: String) { raw(["t": "friend_del", "id": id]) }
 
+    /* ---------- 群：改名 / 拉人 / 退出（跟电脑端同一套 action） ---------- */
+    func groupRename(_ gid: String, name: String) {
+        raw(["t": "group_update", "gid": gid, "action": "rename", "name": name])
+        if let i = groups.firstIndex(where: { $0.id == gid }) { groups[i].name = name }
+    }
+    func groupInvite(_ gid: String, ids: [String]) {
+        for id in ids { raw(["t": "group_update", "gid": gid, "action": "add", "id": id]) }
+    }
+    func groupLeave(_ gid: String) {
+        raw(["t": "group_update", "gid": gid, "action": "leave"])
+        groups.removeAll { $0.id == gid }
+    }
+    func groupOf(_ gid: String) -> ChatGroup? { groups.first { $0.id == gid } }
+    /// 群里某个人是不是好友（拉人时用）
+    func isFriend(_ id: String) -> Bool { friends.contains { $0.id == id } }
+
     /// 用账号 / BB鸡号在本地这份 people 里找（跟电脑端一个做法）
     func findUser(_ q: String) -> Person? {
         let low = q.trimmingCharacters(in: .whitespaces).lowercased()
